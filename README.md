@@ -193,6 +193,11 @@ Once the application is running, visit the Swagger UI at `https://localhost:5001
 - `DELETE /api/mutualfundholdings/{id}` - Delete holding
 - `GET /api/mutualfundholdings/portfolio-summary` - Get portfolio summary
 
+#### Database Management (Development Only)
+- `GET /api/database/status` - Check database connection and migration status
+- `POST /api/database/migrate` - Apply all pending migrations
+- `POST /api/database/create` - Create database if not exists
+
 ## 🔒 Security
 
 - JWT-based authentication
@@ -213,24 +218,86 @@ dotnet test tests/PersonalFinance.IntegrationTests
 
 ## 📦 Database Migrations
 
-### Create a new migration
+### Prerequisites: Install EF Core Tools
+
+**Option 1: Install Globally (Recommended)**
+```bash
+dotnet tool install --global dotnet-ef --version 10.0.2
+```
+
+**Option 2: Install Locally (Per Project)**
+```bash
+dotnet tool restore
+```
+
+Verify installation:
+```bash
+dotnet ef --version
+```
+
+### Method 1: Using CLI (Traditional Approach)
+
+#### Create a new migration
 
 ```bash
 cd src/PersonalFinance.API
 dotnet ef migrations add MigrationName --project ../PersonalFinance.Infrastructure
 ```
 
-### Apply migrations
+#### Apply migrations
 
 ```bash
-dotnet ef database update
+dotnet ef database update --project ../PersonalFinance.Infrastructure
 ```
 
-### Remove last migration
+#### Remove last migration
 
 ```bash
 dotnet ef migrations remove --project ../PersonalFinance.Infrastructure
 ```
+
+### Method 2: Using API Endpoints (Quick & Easy for Development)
+
+We provide convenient API endpoints for database management during development:
+
+#### Check Database Status
+```http
+GET /api/database/status
+```
+Returns migration status, pending migrations, and connection info.
+
+#### Apply All Pending Migrations
+```http
+POST /api/database/migrate
+```
+Applies all pending migrations to your database.
+
+#### Create Database
+```http
+POST /api/database/create
+```
+Creates the database if it doesn't exist.
+
+**Example with curl:**
+```bash
+# Check status
+curl http://localhost:5000/api/database/status
+
+# Apply migrations
+curl -X POST http://localhost:5000/api/database/migrate
+```
+
+**Using Swagger UI:**
+1. Run the API: `dotnet run --project src/PersonalFinance.API`
+2. Open: `http://localhost:5000/swagger`
+3. Navigate to **Database** controller
+4. Try the endpoints
+
+⚠️ **Security Warning**: These endpoints are set to `[AllowAnonymous]` for development. Remove or secure them before production deployment!
+
+### Detailed Migration Guide
+
+For comprehensive migration instructions including Supabase configuration, see [DATABASE_MIGRATION_GUIDE.md](DATABASE_MIGRATION_GUIDE.md)
 
 ## 🌐 Future Enhancements
 
