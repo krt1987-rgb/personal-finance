@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using PersonalFinance.API.Extensions;
 using PersonalFinance.Application.DTOs;
 using PersonalFinance.Application.Interfaces;
 
@@ -153,8 +154,7 @@ public class AuthController : ControllerBase
     {
         try
         {
-            // TODO: Get userId from JWT claims
-            var userId = Guid.Empty; // Placeholder
+            var userId = User.GetUserId();
             await _authService.ChangePasswordAsync(userId, changePasswordDto);
             return Ok(new { message = "Password changed successfully" });
         }

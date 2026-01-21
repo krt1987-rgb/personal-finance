@@ -14,15 +14,21 @@ namespace PersonalFinance.Application.Services;
 public class AuthService : IAuthService
 {
     private readonly IRepository<User> _userRepository;
+    private readonly IRepository<RefreshToken> _refreshTokenRepository;
+    private readonly IRepository<PasswordResetToken> _resetTokenRepository;
     private readonly IUnitOfWork _unitOfWork;
     private readonly IConfiguration _configuration;
 
     public AuthService(
         IRepository<User> userRepository,
+        IRepository<RefreshToken> refreshTokenRepository,
+        IRepository<PasswordResetToken> resetTokenRepository,
         IUnitOfWork unitOfWork,
         IConfiguration configuration)
     {
         _userRepository = userRepository;
+        _refreshTokenRepository = refreshTokenRepository;
+        _resetTokenRepository = resetTokenRepository;
         _unitOfWork = unitOfWork;
         _configuration = configuration;
     }
@@ -39,12 +45,12 @@ public class AuthService : IAuthService
             throw new UnauthorizedAccessException("Account is deactivated");
 
         var token = GenerateJwtToken(user);
-        var refreshToken = GenerateRefreshToken();
+        var refreshToken = await CreateRefreshTokenAsync(user.Id);
         
         return new LoginResponseDto
         {
             Token = token,
-            RefreshToken = refreshToken,
+            RefreshToken = refreshToken.Token,
             ExpiresAt = DateTime.UtcNow.AddMinutes(GetTokenExpirationMinutes()),
             User = MapToUserDto(user)
         };
@@ -74,12 +80,12 @@ public class AuthService : IAuthService
         await _unitOfWork.SaveChangesAsync();
 
         var token = GenerateJwtToken(user);
-        var refreshToken = GenerateRefreshToken();
+        var refreshToken = await CreateRefreshTokenAsync(user.Id);
         
         return new LoginResponseDto
         {
             Token = token,
-            RefreshToken = refreshToken,
+            RefreshToken = refreshToken.Token,
             ExpiresAt = DateTime.UtcNow.AddMinutes(GetTokenExpirationMinutes()),
             User = MapToUserDto(user)
         };
@@ -87,22 +93,34 @@ public class AuthService : IAuthService
 
     public async Task<LoginResponseDto> RefreshTokenAsync(RefreshTokenDto refreshTokenDto)
     {
-        // TODO: Implement refresh token validation and storage
-        // For now, validate the old token and generate a new one
-        var principal = ValidateToken(refreshTokenDto.Token);
-        var userId = Guid.Parse(principal.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? string.Empty);
+        // Find and validate the refresh token
+        var refreshTokens = await _refreshTokenRepository.FindAsync(rt => rt.Token == refreshTokenDto.RefreshToken);
+        var refreshToken = refreshTokens.FirstOrDefault();
         
-        var user = await _userRepository.GetByIdAsync(userId);
-        if (user == null || !user.IsActive)
-            throw new UnauthorizedAccessException("Invalid token");
+        if (refreshToken == null || !refreshToken.IsActive)
+            throw new UnauthorizedAccessException("Invalid or expired refresh token");
 
+        var user = await _userRepository.GetByIdAsync(refreshToken.UserId);
+        if (user == null || !user.IsActive)
+            throw new UnauthorizedAccessException("User not found or inactive");
+
+        // Revoke old token
+        refreshToken.IsRevoked = true;
+        refreshToken.RevokedAt = DateTime.UtcNow;
+        refreshToken.RevokedReason = "Replaced by new token";
+        
         var newToken = GenerateJwtToken(user);
-        var newRefreshToken = GenerateRefreshToken();
+        var newRefreshToken = await CreateRefreshTokenAsync(user.Id);
+        
+        // Store replacement token reference
+        refreshToken.ReplacedByToken = newRefreshToken.Token;
+        await _refreshTokenRepository.UpdateAsync(refreshToken);
+        await _unitOfWork.SaveChangesAsync();
         
         return new LoginResponseDto
         {
             Token = newToken,
-            RefreshToken = newRefreshToken,
+            RefreshToken = newRefreshToken.Token,
             ExpiresAt = DateTime.UtcNow.AddMinutes(GetTokenExpirationMinutes()),
             User = MapToUserDto(user)
         };
@@ -116,9 +134,12 @@ public class AuthService : IAuthService
         if (user == null)
             return false; // Don't reveal if email exists
 
-        // TODO: Generate reset token and send email
-        // For now, just return success
-        // In production: Store reset token with expiration, send email with link
+        // Generate reset token
+        var resetToken = await CreatePasswordResetTokenAsync(user.Id);
+        
+        // TODO: Send email with reset link
+        // For now, log the token (in production, email it)
+        // Example: https://yourapp.com/reset-password?token={resetToken.Token}&email={user.Email}
         
         return true;
     }
@@ -134,11 +155,23 @@ public class AuthService : IAuthService
         if (user == null)
             throw new InvalidOperationException("Invalid reset token");
 
-        // TODO: Validate reset token
-        // For now, just update the password
+        // Find and validate reset token
+        var resetTokens = await _resetTokenRepository.FindAsync(rt => 
+            rt.Token == resetPasswordDto.Token && rt.UserId == user.Id);
+        var resetToken = resetTokens.FirstOrDefault();
         
+        if (resetToken == null || !resetToken.IsValid)
+            throw new InvalidOperationException("Invalid or expired reset token");
+        
+        // Update password
         user.PasswordHash = HashPassword(resetPasswordDto.NewPassword);
+        
+        // Mark token as used
+        resetToken.IsUsed = true;
+        resetToken.UsedAt = DateTime.UtcNow;
+        
         await _userRepository.UpdateAsync(user);
+        await _resetTokenRepository.UpdateAsync(resetToken);
         await _unitOfWork.SaveChangesAsync();
         
         return true;
@@ -174,6 +207,38 @@ public class AuthService : IAuthService
         {
             return Task.FromResult(false);
         }
+    }
+
+    private async Task<RefreshToken> CreateRefreshTokenAsync(Guid userId)
+    {
+        var refreshToken = new RefreshToken
+        {
+            UserId = userId,
+            Token = GenerateRefreshToken(),
+            ExpiresAt = DateTime.UtcNow.AddDays(7), // Refresh token valid for 7 days
+            IsRevoked = false
+        };
+
+        await _refreshTokenRepository.AddAsync(refreshToken);
+        await _unitOfWork.SaveChangesAsync();
+        
+        return refreshToken;
+    }
+
+    private async Task<PasswordResetToken> CreatePasswordResetTokenAsync(Guid userId)
+    {
+        var resetToken = new PasswordResetToken
+        {
+            UserId = userId,
+            Token = GeneratePasswordResetToken(),
+            ExpiresAt = DateTime.UtcNow.AddHours(1), // Reset token valid for 1 hour
+            IsUsed = false
+        };
+
+        await _resetTokenRepository.AddAsync(resetToken);
+        await _unitOfWork.SaveChangesAsync();
+        
+        return resetToken;
     }
 
     private string GenerateJwtToken(User user)
@@ -224,6 +289,14 @@ public class AuthService : IAuthService
     }
 
     private string GenerateRefreshToken()
+    {
+        var randomNumber = new byte[32];
+        using var rng = RandomNumberGenerator.Create();
+        rng.GetBytes(randomNumber);
+        return Convert.ToBase64String(randomNumber);
+    }
+
+    private string GeneratePasswordResetToken()
     {
         var randomNumber = new byte[32];
         using var rng = RandomNumberGenerator.Create();

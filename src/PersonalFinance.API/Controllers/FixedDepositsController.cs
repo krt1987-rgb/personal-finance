@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using PersonalFinance.API.Extensions;
 using PersonalFinance.Application.DTOs;
 using PersonalFinance.Application.Interfaces;
 
@@ -26,7 +27,7 @@ public class FixedDepositsController : ControllerBase
     {
         try
         {
-            var userId = Guid.Empty; // TODO: Get from JWT
+            var userId = User.GetUserId();
             var deposits = await _fixedDepositService.GetAllAsync(userId);
             return Ok(deposits);
         }
@@ -111,7 +112,7 @@ public class FixedDepositsController : ControllerBase
     {
         try
         {
-            var userId = Guid.Empty; // TODO: Get from JWT
+            var userId = User.GetUserId();
             var summary = await _fixedDepositService.GetSummaryAsync(userId);
             return Ok(summary);
         }

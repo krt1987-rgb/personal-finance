@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using PersonalFinance.API.Extensions;
 using PersonalFinance.Application.DTOs;
 using PersonalFinance.Application.Interfaces;
 
@@ -29,8 +30,7 @@ public class BankAccountsController : ControllerBase
     {
         try
         {
-            // TODO: Get userId from JWT token claims
-            var userId = Guid.Empty;
+            var userId = User.GetUserId();
             var accounts = await _bankAccountService.GetAllAsync(userId);
             return Ok(accounts);
         }

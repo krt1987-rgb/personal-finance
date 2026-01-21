@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using PersonalFinance.API.Extensions;
 using PersonalFinance.Application.DTOs;
 using PersonalFinance.Application.Interfaces;
 
@@ -27,8 +28,7 @@ public class UsersController : ControllerBase
     {
         try
         {
-            // TODO: Get userId from JWT claims
-            var userId = Guid.Empty; // Placeholder
+            var userId = User.GetUserId();
             var user = await _userService.GetByIdAsync(userId);
             if (user == null) return NotFound();
             return Ok(user);
@@ -48,8 +48,7 @@ public class UsersController : ControllerBase
     {
         try
         {
-            // TODO: Get userId from JWT claims
-            var userId = Guid.Empty; // Placeholder
+            var userId = User.GetUserId();
             await _userService.UpdateProfileAsync(userId, updateDto);
             return NoContent();
         }

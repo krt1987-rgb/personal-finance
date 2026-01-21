@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using PersonalFinance.API.Extensions;
 using PersonalFinance.Application.DTOs;
 using PersonalFinance.Application.Interfaces;
 
@@ -29,8 +30,7 @@ public class StockHoldingsController : ControllerBase
     {
         try
         {
-            // TODO: Get userId from JWT token claims
-            var userId = Guid.Empty; // Placeholder
+            var userId = User.GetUserId();
             var holdings = await _stockHoldingService.GetAllAsync(userId);
             return Ok(holdings);
         }
@@ -133,8 +133,7 @@ public class StockHoldingsController : ControllerBase
     {
         try
         {
-            // TODO: Get userId from JWT token claims
-            var userId = Guid.Empty; // Placeholder
+            var userId = User.GetUserId();
             var summary = await _stockHoldingService.GetPortfolioSummaryAsync(userId);
             return Ok(summary);
         }

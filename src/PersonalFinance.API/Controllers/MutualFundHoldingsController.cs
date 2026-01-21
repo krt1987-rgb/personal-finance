@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using PersonalFinance.API.Extensions;
 using PersonalFinance.Application.DTOs;
 using PersonalFinance.Application.Interfaces;
 
@@ -26,7 +27,7 @@ public class MutualFundHoldingsController : ControllerBase
     {
         try
         {
-            var userId = Guid.Empty; // TODO: Get from JWT
+            var userId = User.GetUserId();
             var holdings = await _mutualFundService.GetAllAsync(userId);
             return Ok(holdings);
         }
@@ -111,7 +112,7 @@ public class MutualFundHoldingsController : ControllerBase
     {
         try
         {
-            var userId = Guid.Empty; // TODO: Get from JWT
+            var userId = User.GetUserId();
             var summary = await _mutualFundService.GetPortfolioSummaryAsync(userId);
             return Ok(summary);
         }

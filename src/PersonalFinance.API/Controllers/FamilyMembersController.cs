@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using PersonalFinance.API.Extensions;
 using PersonalFinance.Application.DTOs;
 using PersonalFinance.Application.Interfaces;
 
@@ -26,7 +27,7 @@ public class FamilyMembersController : ControllerBase
     {
         try
         {
-            var userId = Guid.Empty; // TODO: Get from JWT
+            var userId = User.GetUserId();
             var members = await _familyMemberService.GetAllAsync(userId);
             return Ok(members);
         }
