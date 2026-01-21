@@ -1,192 +1,203 @@
-# Seed Data Reference
-
-This document provides details about the sample data seeded into the database for testing and visualization purposes.
+# Seed Data Reference - Indian Portfolio
 
 ## Overview
+The application includes comprehensive seed data with Indian financial context for testing and demonstration purposes. This document provides details about the seeded data, including login credentials, portfolio breakdown, and testing scenarios.
 
-The `SeedSampleData` migration includes realistic financial data across all modules to help you visualize and test the application.
+## User Credentials
 
-## Users
+### User 1 - Rajesh Kumar
+- **Email**: rajesh.kumar@example.com
+- **Password**: Password123!
+- **Phone**: +91-98765-43210
+- **Date of Birth**: March 15, 1985
 
-Two sample users are created with the following credentials:
+### User 2 - Priya Sharma
+- **Email**: priya.sharma@example.com
+- **Password**: Password123!
+- **Phone**: +91-98765-43211
+- **Date of Birth**: July 22, 1990
 
-| User | Email | Password | Role | Description |
-|------|-------|----------|------|-------------|
-| John Doe | john.doe@example.com | Password123! | Admin | Primary admin user with full portfolio |
-| Jane Smith | jane.smith@example.com | Password123! | User | Standard user with basic holdings |
+## Portfolio Breakdown
 
-**Note**: Password is hashed using SHA256. For production, use BCrypt or Argon2.
+### Rajesh Kumar's Portfolio (~₹8.4 Crores)
 
-## Family Members
+#### Bank Accounts
+| Bank | Account Type | Balance (INR) |
+|------|-------------|---------------|
+| HDFC Bank | Savings | ₹20,75,000 |
+| ICICI Bank | Current | ₹10,37,500 |
+| **Total** | | **₹31,12,500** |
 
-| Name | Relationship | Belongs To | Age Group |
-|------|--------------|------------|-----------|
-| Emily Doe | Spouse | John Doe | Adult |
-| Michael Doe | Child | John Doe | Minor |
+#### Fixed Deposits
+| Bank | Principal (INR) | Interest Rate | Maturity Date | Maturity Amount (INR) | Status |
+|------|-----------------|---------------|---------------|----------------------|--------|
+| HDFC Bank | ₹41,50,000 | 7.25% | Jan 1, 2026 | ₹47,11,080 | Active |
+| ICICI Bank | ₹83,00,000 | 7.5% | Jun 1, 2025 | ₹95,02,670 | Active |
+| **Total** | **₹1,24,50,000** | | | **₹1,42,13,750** | |
 
-## Bank Accounts
+#### Provident Funds
+| Type | Account Number | Balance (INR) | Monthly Contribution (INR) | Interest Rate |
+|------|---------------|---------------|---------------------------|---------------|
+| EPF | EPF-1234567890 | ₹2,07,50,000 | ₹2,49,000 (Employee + Employer) | 8.25% |
+| PPF | PPF-0987654321 | ₹3,73,50,000 | ₹10,37,500 | 7.1% |
+| **Total** | | **₹5,81,00,000** | | |
 
-### John Doe's Accounts
-- **Chase Bank** - Savings Account (****1234): $25,000.00
-- **Bank of America** - Checking Account (****5678): $12,500.00
+#### Stock Holdings (NSE)
+| Symbol | Company | Quantity | Avg Buy Price (₹) | Current Price (₹) | Invested (₹) | Current Value (₹) | Profit/Loss (₹) | ROI |
+|--------|---------|----------|-------------------|-------------------|--------------|-------------------|-----------------|-----|
+| RELIANCE | Reliance Industries | 150 | 2,450.75 | 2,875.50 | 3,67,612 | 4,31,325 | +63,713 | +17.3% |
+| TCS | Tata Consultancy Services | 100 | 3,280.50 | 3,965.20 | 3,28,050 | 3,96,520 | +68,470 | +20.9% |
+| INFY | Infosys Ltd | 200 | 1,425.25 | 1,678.80 | 2,85,050 | 3,35,760 | +50,710 | +17.8% |
+| **Total** | | **450** | | | **₹9,80,712** | **₹11,63,605** | **+₹1,82,893** | **+18.7%** |
 
-### Jane Smith's Accounts
-- **Wells Fargo** - Savings Account (****9012): $35,000.00
+#### Mutual Fund Holdings (Indian Funds)
+| Fund | Fund House | Type | Units | NAV (₹) | Current NAV (₹) | Invested (₹) | Current Value (₹) | Profit/Loss (₹) | ROI |
+|------|------------|------|-------|---------|-----------------|--------------|-------------------|-----------------|-----|
+| SBI Bluechip Fund | SBI MF | Equity | 2,500 | 85.00 | 96.50 | 2,12,500 | 2,41,250 | +28,750 | +13.5% |
+| HDFC Balanced Advantage | HDFC MF | Hybrid | 1,800 | 225.00 | 258.75 | 4,05,000 | 4,65,750 | +60,750 | +15.0% |
+| **Total** | | | **4,300** | | | **₹6,17,500** | **₹7,07,000** | **+₹89,500** | **+14.5%** |
 
-**Total Banking Assets**: $72,500.00
+#### Total Net Worth
+- Bank Accounts: ₹31,12,500
+- Fixed Deposits: ₹1,24,50,000 (Principal)
+- Provident Funds: ₹5,81,00,000
+- Stock Holdings: ₹11,63,605
+- Mutual Funds: ₹7,07,000
+- **Total: ₹8,55,33,105 (~₹8.55 Crores)**
 
-## Fixed Deposits
+---
 
-| Bank | Account | Principal | Rate | Start Date | Maturity Date | Maturity Amount | Owner |
-|------|---------|-----------|------|------------|---------------|-----------------|-------|
-| Chase Bank | FD-2024-001 | $50,000 | 6.5% | Jan 1, 2024 | Jan 1, 2026 | $56,760 | John Doe |
-| HDFC Bank | FD-2023-042 | $100,000 | 7.0% | Jun 1, 2023 | Jun 1, 2025 | $114,490 | John Doe |
+### Priya Sharma's Portfolio (~₹2.28 Crores)
 
-**Total FD Principal**: $150,000.00  
-**Expected Maturity Value**: $171,250.00
+#### Bank Accounts
+| Bank | Account Type | Balance (INR) |
+|------|-------------|---------------|
+| State Bank of India | Savings | ₹29,05,000 |
 
-## Provident Funds
+#### Provident Funds
+| Type | Balance (INR) | Monthly Contribution (INR) |
+|------|---------------|---------------------------|
+| NPS | ₹1,49,40,000 | ₹1,66,000 |
 
-| Type | Account Number | Balance | Monthly Contribution | Interest Rate | Owner |
-|------|----------------|---------|----------------------|---------------|-------|
-| EPF | EPF-1234567890 | $250,000 | Employee: $1,500, Employer: $1,500 | 8.25% | John Doe |
-| PPF | PPF-0987654321 | $450,000 | $12,500 | 7.1% | John Doe |
-| NPS | NPS-1122334455 | $180,000 | Employee: $1,000, Employer: $1,000 | 9.5% | Jane Smith |
+#### Stock Holdings (NSE)
+| Symbol | Company | Quantity | Avg Buy Price (₹) | Current Price (₹) | Invested (₹) | Current Value (₹) | Profit/Loss (₹) | ROI |
+|--------|---------|----------|-------------------|-------------------|--------------|-------------------|-----------------|-----|
+| HDFCBANK | HDFC Bank | 120 | 1,580.00 | 1,745.50 | 1,89,600 | 2,09,460 | +19,860 | +10.5% |
+| WIPRO | Wipro Ltd | 300 | 425.50 | 498.35 | 1,27,650 | 1,49,505 | +21,855 | +17.1% |
+| **Total** | | **420** | | | **₹3,17,250** | **₹3,58,965** | **+₹41,715** | **+13.1%** |
 
-**Total PF Balance**: $880,000.00
+#### Mutual Fund Holdings
+| Fund | Fund House | Type | Units | Current Value (INR) |
+|------|------------|------|-------|---------------------|
+| ICICI Prudential Technology | ICICI Prudential | Equity | 3,000 | ₹5,67,750 |
 
-## Stock Portfolio
-
-### John Doe's Holdings
-
-| Symbol | Company | Shares | Avg Buy Price | Current Price | Invested | Current Value | P&L | Sector |
-|--------|---------|--------|---------------|---------------|----------|---------------|-----|---------|
-| AAPL | Apple Inc. | 50 | $150.25 | $185.50 | $7,512.50 | $9,275.00 | **+$1,762.50** | Technology |
-| MSFT | Microsoft Corp. | 30 | $290.75 | $380.20 | $8,722.50 | $11,406.00 | **+$2,683.50** | Technology |
-| GOOGL | Alphabet Inc. | 25 | $120.50 | $142.80 | $3,012.50 | $3,570.00 | **+$557.50** | Technology |
-
-**John's Total**: Invested $19,247.50 → Current $24,251.00 → **Profit: +$5,003.50 (+26.0%)**
-
-### Jane Smith's Holdings
-
-| Symbol | Company | Shares | Avg Buy Price | Current Price | Invested | Current Value | P&L | Sector |
-|--------|---------|--------|---------------|---------------|----------|---------------|-----|---------|
-| TSLA | Tesla Inc. | 40 | $210.00 | $248.50 | $8,400.00 | $9,940.00 | **+$1,540.00** | Automotive |
-| AMZN | Amazon.com | 15 | $135.25 | $178.35 | $2,028.75 | $2,675.25 | **+$646.50** | E-commerce |
-
-**Jane's Total**: Invested $10,428.75 → Current $12,615.25 → **Profit: +$2,186.50 (+21.0%)**
-
-**Overall Stock Portfolio**: $29,676.25 invested → $36,866.25 current → **+$7,190.00 profit (+24.2%)**
-
-## Mutual Fund Portfolio
-
-### John Doe's Holdings
-
-| Fund Name | Fund House | Type | Units | Invested NAV | Current NAV | Invested | Current Value | Returns |
-|-----------|------------|------|-------|--------------|-------------|----------|---------------|---------|
-| Vanguard 500 Index Fund | Vanguard | Equity | 500 | $85.00 | $95.50 | $42,500 | $47,750 | **+$5,250 (+12.4%)** |
-| Fidelity Contrafund | Fidelity | Equity | 300 | $125.00 | $142.75 | $37,500 | $42,825 | **+$5,325 (+14.2%)** |
-
-### Jane Smith's Holdings
-
-| Fund Name | Fund House | Type | Units | Invested NAV | Current NAV | Invested | Current Value | Returns |
-|-----------|------------|------|-------|--------------|-------------|----------|---------------|---------|
-| BlackRock Global Allocation | BlackRock | Balanced | 400 | $110.00 | $118.25 | $44,000 | $47,300 | **+$3,300 (+7.5%)** |
-
-**Total MF Portfolio**: $124,000 invested → $137,875 current → **+$13,875 profit (+11.2%)**
+#### Total Net Worth
+- Bank Accounts: ₹29,05,000
+- Provident Funds: ₹1,49,40,000
+- Stock Holdings: ₹3,58,965
+- Mutual Funds: ₹5,67,750
+- **Total: ₹2,27,71,715 (~₹2.28 Crores)**
 
 ## Transaction History
 
-Sample transactions showing income and expenses:
+### Sample Transactions Seeded (in INR)
+- Income transactions (salary credits: ₹4.15L and ₹4.98L)
+- Expense transactions (rent, groceries, utilities)
+- Stock purchase transactions with fees
+- Mutual fund SIP and lump sum investments
 
-### Income
-- John Doe: $5,000 (Salary) - Jan 1, 2024
-- Jane Smith: $6,000 (Salary) - Jan 1, 2024
+## Testing Scenarios
 
-### Expenses
-- John Doe: $1,200 (Rent) - Jan 5, 2024
-- John Doe: $500 (Groceries) - Jan 10, 2024
-- Jane Smith: $800 (Utilities) - Jan 12, 2024
-
-## Portfolio Summary
-
-### John Doe's Total Wealth
-- Bank Accounts: $37,500
-- Fixed Deposits: $150,000 (Principal)
-- Provident Funds: $700,000 (EPF + PPF)
-- Stocks: $24,251
-- Mutual Funds: $90,575
-- **Total Net Worth**: ~$1,002,326
-
-### Jane Smith's Total Wealth
-- Bank Accounts: $35,000
-- Provident Funds: $180,000 (NPS)
-- Stocks: $12,615
-- Mutual Funds: $47,300
-- **Total Net Worth**: ~$274,915
-
-## Using the Seed Data
-
-### Apply the Migration
-
-**Option 1: Using API (Recommended)**
+### 1. Authentication Testing
 ```bash
-# Start the API
-cd src/PersonalFinance.API
-dotnet run
+# Login as Rajesh Kumar
+POST /api/auth/login
+{
+  "email": "rajesh.kumar@example.com",
+  "password": "Password123!"
+}
 
-# Apply migrations via API endpoint
-curl -X POST http://localhost:5000/api/database/migrate
+# Login as Priya Sharma
+POST /api/auth/login
+{
+  "email": "priya.sharma@example.com",
+  "password": "Password123!"
+}
 ```
 
-**Option 2: Using CLI**
+### 2. Portfolio Summary Testing
 ```bash
-cd src/PersonalFinance.API
-dotnet ef database update --project ../PersonalFinance.Infrastructure
+# Get stock portfolio summary
+GET /api/stockholdings/portfolio-summary
+Authorization: Bearer {token}
+
+# Get mutual fund portfolio summary
+GET /api/mutualfundholdings/portfolio-summary
+Authorization: Bearer {token}
+
+# Get PF summary
+GET /api/providentfunds/summary
+Authorization: Bearer {token}
+
+# Get FD summary
+GET /api/fixeddeposits/summary
+Authorization: Bearer {token}
 ```
 
-### Login Credentials
+### 3. Profit/Loss Calculations
+The seeded data demonstrates:
+- Stock investments showing +18.7% average ROI (Rajesh) and +13.1% (Priya)
+- Mutual funds showing +14.5% ROI (Rajesh) and +14.7% (Priya)
+- Fixed deposits with competitive Indian interest rates (7.25% - 7.5%)
+- Provident funds with standard EPF (8.25%), PPF (7.1%), and NPS (9.5%) rates
 
-Use these credentials to test the application:
+### 4. Multi-User Data Isolation
+Test that:
+- Rajesh Kumar can only see his 3 stock holdings
+- Priya Sharma can only see her 2 stock holdings
+- Family member relationships are properly linked
+- Bank accounts are user-specific
 
+## Database Migration
+
+To apply the seed data:
+
+```bash
+# Using EF Core CLI
+dotnet ef database update --project src/PersonalFinance.Infrastructure
+
+# Or using the API endpoint
+POST /api/database/migrate
 ```
-Admin User:
-Email: john.doe@example.com
-Password: Password123!
-
-Regular User:
-Email: jane.smith@example.com
-Password: Password123!
-```
-
-### Testing Features
-
-With this seed data, you can test:
-- ✅ User authentication and authorization
-- ✅ Portfolio visualization (stocks showing gains)
-- ✅ Mutual fund performance tracking
-- ✅ Fixed deposit maturity calculations
-- ✅ Provident fund summaries by type
-- ✅ Family member management
-- ✅ Transaction history and categorization
-- ✅ Multi-account banking overview
-- ✅ Wealth dashboard with real numbers
-
-## Data Relationships
-
-The seed data demonstrates:
-- One-to-many: User → Bank Accounts, Stock Holdings, MF Holdings
-- Foreign keys: All transactions linked to appropriate holdings
-- Soft delete support: All records have `IsDeleted = false`
-- Audit trail: All records have `CreatedAt`, `CreatedBy` populated
-- Realistic calculations: Current prices showing actual market gains/losses
 
 ## Notes
 
-- All dates use UTC timezone
-- Currency is in USD
-- Stock prices are realistic but fictional
-- Password hash is simplified for demo (use BCrypt in production)
-- GUIDs are predefined for consistency and easy testing
-- Interest rates and maturity calculations are realistic
-- Portfolio shows actual profit/loss scenarios
+- All passwords are hashed using SHA256 (Hash: 8C6976E5B5410415BDE908BD4DEE15DFB167A9C873FC4BB8A81F6F2AB448A918)
+- GUIDs are predefined for consistency in testing
+- Dates use UTC timezone
+- Soft delete is set to `false` for all records
+- All financial amounts use INR currency
+- Decimal precision: 18,2 for amounts, 18,4 for units/shares
+- Stock prices are from NSE (National Stock Exchange of India)
+- Mutual fund data uses popular Indian fund houses (SBI MF, HDFC MF, ICICI Prudential)
+- Interest rates match current Indian market rates
+
+## Family Structure
+
+**Rajesh Kumar's Family:**
+- Spouse: Anjali Kumar (May 20, 1987)
+- Child: Arjun Kumar (September 10, 2015)
+
+This family structure allows testing of:
+- Family member management
+- Relationships tracking
+- Multi-member financial planning
+
+## Indian Financial Context
+
+**Banks**: HDFC Bank, ICICI Bank, State Bank of India
+**Stock Exchange**: NSE (National Stock Exchange)
+**Popular Stocks**: Reliance, TCS, Infosys, HDFC Bank, Wipro
+**Mutual Funds**: SBI Bluechip Fund, HDFC Balanced Advantage, ICICI Prudential Technology Fund
+**Provident Funds**: EPF (8.25%), PPF (7.1%), NPS (9.5%)
+**FD Interest Rates**: 7.25% - 7.5% p.a.
