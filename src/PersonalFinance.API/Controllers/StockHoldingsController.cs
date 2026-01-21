@@ -1,7 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using PersonalFinance.Domain.Entities;
-using PersonalFinance.Domain.Interfaces;
+using PersonalFinance.Application.DTOs;
+using PersonalFinance.Application.Interfaces;
 
 namespace PersonalFinance.API.Controllers;
 
@@ -10,20 +10,14 @@ namespace PersonalFinance.API.Controllers;
 [Authorize]
 public class StockHoldingsController : ControllerBase
 {
-    private readonly IRepository<StockHolding> _stockHoldingRepository;
-    private readonly IRepository<StockTransaction> _stockTransactionRepository;
-    private readonly IUnitOfWork _unitOfWork;
+    private readonly IStockHoldingService _stockHoldingService;
     private readonly ILogger<StockHoldingsController> _logger;
 
     public StockHoldingsController(
-        IRepository<StockHolding> stockHoldingRepository,
-        IRepository<StockTransaction> stockTransactionRepository,
-        IUnitOfWork unitOfWork,
+        IStockHoldingService stockHoldingService,
         ILogger<StockHoldingsController> logger)
     {
-        _stockHoldingRepository = stockHoldingRepository;
-        _stockTransactionRepository = stockTransactionRepository;
-        _unitOfWork = unitOfWork;
+        _stockHoldingService = stockHoldingService;
         _logger = logger;
     }
 
@@ -31,12 +25,13 @@ public class StockHoldingsController : ControllerBase
     /// Get all stock holdings for the current user
     /// </summary>
     [HttpGet]
-    public async Task<ActionResult<IEnumerable<StockHolding>>> GetStockHoldings()
+    public async Task<ActionResult<IEnumerable<StockHoldingDto>>> GetStockHoldings()
     {
         try
         {
             // TODO: Get userId from JWT token claims
-            var holdings = await _stockHoldingRepository.GetAllAsync();
+            var userId = Guid.Empty; // Placeholder
+            var holdings = await _stockHoldingService.GetAllAsync(userId);
             return Ok(holdings);
         }
         catch (Exception ex)
@@ -50,11 +45,11 @@ public class StockHoldingsController : ControllerBase
     /// Get a specific stock holding by ID
     /// </summary>
     [HttpGet("{id}")]
-    public async Task<ActionResult<StockHolding>> GetStockHolding(Guid id)
+    public async Task<ActionResult<StockHoldingDto>> GetStockHolding(Guid id)
     {
         try
         {
-            var holding = await _stockHoldingRepository.GetByIdAsync(id);
+            var holding = await _stockHoldingService.GetByIdAsync(id);
             if (holding == null)
             {
                 return NotFound();
@@ -72,15 +67,12 @@ public class StockHoldingsController : ControllerBase
     /// Create a new stock holding
     /// </summary>
     [HttpPost]
-    public async Task<ActionResult<StockHolding>> CreateStockHolding(StockHolding stockHolding)
+    public async Task<ActionResult<StockHoldingDto>> CreateStockHolding(CreateStockHoldingDto createDto)
     {
         try
         {
-            // TODO: Set userId from JWT token claims
-            await _stockHoldingRepository.AddAsync(stockHolding);
-            await _unitOfWork.SaveChangesAsync();
-            
-            return CreatedAtAction(nameof(GetStockHolding), new { id = stockHolding.Id }, stockHolding);
+            var holding = await _stockHoldingService.CreateAsync(createDto);
+            return CreatedAtAction(nameof(GetStockHolding), new { id = holding.Id }, holding);
         }
         catch (Exception ex)
         {
@@ -93,19 +85,16 @@ public class StockHoldingsController : ControllerBase
     /// Update an existing stock holding
     /// </summary>
     [HttpPut("{id}")]
-    public async Task<IActionResult> UpdateStockHolding(Guid id, StockHolding stockHolding)
+    public async Task<IActionResult> UpdateStockHolding(Guid id, UpdateStockHoldingDto updateDto)
     {
-        if (id != stockHolding.Id)
-        {
-            return BadRequest("ID mismatch");
-        }
-
         try
         {
-            await _stockHoldingRepository.UpdateAsync(stockHolding);
-            await _unitOfWork.SaveChangesAsync();
-            
+            await _stockHoldingService.UpdateAsync(id, updateDto);
             return NoContent();
+        }
+        catch (KeyNotFoundException)
+        {
+            return NotFound();
         }
         catch (Exception ex)
         {
@@ -122,16 +111,12 @@ public class StockHoldingsController : ControllerBase
     {
         try
         {
-            var holding = await _stockHoldingRepository.GetByIdAsync(id);
-            if (holding == null)
-            {
-                return NotFound();
-            }
-
-            await _stockHoldingRepository.DeleteAsync(holding);
-            await _unitOfWork.SaveChangesAsync();
-            
+            await _stockHoldingService.DeleteAsync(id);
             return NoContent();
+        }
+        catch (KeyNotFoundException)
+        {
+            return NotFound();
         }
         catch (Exception ex)
         {
@@ -144,20 +129,13 @@ public class StockHoldingsController : ControllerBase
     /// Get portfolio summary with total investment, current value, and P&L
     /// </summary>
     [HttpGet("portfolio-summary")]
-    public async Task<ActionResult<object>> GetPortfolioSummary()
+    public async Task<ActionResult<PortfolioSummaryDto>> GetPortfolioSummary()
     {
         try
         {
-            var holdings = await _stockHoldingRepository.GetAllAsync();
-            
-            var summary = new
-            {
-                TotalInvestment = holdings.Sum(h => h.InvestedAmount),
-                CurrentValue = holdings.Sum(h => h.CurrentValue ?? 0),
-                TotalProfitLoss = holdings.Sum(h => h.ProfitLoss ?? 0),
-                TotalHoldings = holdings.Count()
-            };
-            
+            // TODO: Get userId from JWT token claims
+            var userId = Guid.Empty; // Placeholder
+            var summary = await _stockHoldingService.GetPortfolioSummaryAsync(userId);
             return Ok(summary);
         }
         catch (Exception ex)

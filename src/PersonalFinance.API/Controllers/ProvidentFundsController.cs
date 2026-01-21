@@ -1,7 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using PersonalFinance.Domain.Entities;
-using PersonalFinance.Domain.Interfaces;
+using PersonalFinance.Application.DTOs;
+using PersonalFinance.Application.Interfaces;
 
 namespace PersonalFinance.API.Controllers;
 
@@ -10,29 +10,24 @@ namespace PersonalFinance.API.Controllers;
 [Authorize]
 public class ProvidentFundsController : ControllerBase
 {
-    private readonly IRepository<ProvidentFund> _providentFundRepository;
-    private readonly IUnitOfWork _unitOfWork;
+    private readonly IProvidentFundService _providentFundService;
     private readonly ILogger<ProvidentFundsController> _logger;
 
     public ProvidentFundsController(
-        IRepository<ProvidentFund> providentFundRepository,
-        IUnitOfWork _unitOfWork,
+        IProvidentFundService providentFundService,
         ILogger<ProvidentFundsController> logger)
     {
-        _providentFundRepository = providentFundRepository;
-        this._unitOfWork = _unitOfWork;
+        _providentFundService = providentFundService;
         _logger = logger;
     }
 
-    /// <summary>
-    /// Get all provident funds
-    /// </summary>
     [HttpGet]
-    public async Task<ActionResult<IEnumerable<ProvidentFund>>> GetProvidentFunds()
+    public async Task<ActionResult<IEnumerable<ProvidentFundDto>>> GetProvidentFunds()
     {
         try
         {
-            var funds = await _providentFundRepository.GetAllAsync();
+            var userId = Guid.Empty; // TODO: Get from JWT
+            var funds = await _providentFundService.GetAllAsync(userId);
             return Ok(funds);
         }
         catch (Exception ex)
@@ -42,19 +37,13 @@ public class ProvidentFundsController : ControllerBase
         }
     }
 
-    /// <summary>
-    /// Get a specific provident fund by ID
-    /// </summary>
     [HttpGet("{id}")]
-    public async Task<ActionResult<ProvidentFund>> GetProvidentFund(Guid id)
+    public async Task<ActionResult<ProvidentFundDto>> GetProvidentFund(Guid id)
     {
         try
         {
-            var fund = await _providentFundRepository.GetByIdAsync(id);
-            if (fund == null)
-            {
-                return NotFound();
-            }
+            var fund = await _providentFundService.GetByIdAsync(id);
+            if (fund == null) return NotFound();
             return Ok(fund);
         }
         catch (Exception ex)
@@ -64,18 +53,13 @@ public class ProvidentFundsController : ControllerBase
         }
     }
 
-    /// <summary>
-    /// Create a new provident fund
-    /// </summary>
     [HttpPost]
-    public async Task<ActionResult<ProvidentFund>> CreateProvidentFund(ProvidentFund providentFund)
+    public async Task<ActionResult<ProvidentFundDto>> CreateProvidentFund(CreateProvidentFundDto createDto)
     {
         try
         {
-            await _providentFundRepository.AddAsync(providentFund);
-            await _unitOfWork.SaveChangesAsync();
-            
-            return CreatedAtAction(nameof(GetProvidentFund), new { id = providentFund.Id }, providentFund);
+            var fund = await _providentFundService.CreateAsync(createDto);
+            return CreatedAtAction(nameof(GetProvidentFund), new { id = fund.Id }, fund);
         }
         catch (Exception ex)
         {
@@ -84,23 +68,17 @@ public class ProvidentFundsController : ControllerBase
         }
     }
 
-    /// <summary>
-    /// Update an existing provident fund
-    /// </summary>
     [HttpPut("{id}")]
-    public async Task<IActionResult> UpdateProvidentFund(Guid id, ProvidentFund providentFund)
+    public async Task<IActionResult> UpdateProvidentFund(Guid id, UpdateProvidentFundDto updateDto)
     {
-        if (id != providentFund.Id)
-        {
-            return BadRequest("ID mismatch");
-        }
-
         try
         {
-            await _providentFundRepository.UpdateAsync(providentFund);
-            await _unitOfWork.SaveChangesAsync();
-            
+            await _providentFundService.UpdateAsync(id, updateDto);
             return NoContent();
+        }
+        catch (KeyNotFoundException)
+        {
+            return NotFound();
         }
         catch (Exception ex)
         {
@@ -109,24 +87,17 @@ public class ProvidentFundsController : ControllerBase
         }
     }
 
-    /// <summary>
-    /// Delete a provident fund
-    /// </summary>
     [HttpDelete("{id}")]
     public async Task<IActionResult> DeleteProvidentFund(Guid id)
     {
         try
         {
-            var fund = await _providentFundRepository.GetByIdAsync(id);
-            if (fund == null)
-            {
-                return NotFound();
-            }
-
-            await _providentFundRepository.DeleteAsync(fund);
-            await _unitOfWork.SaveChangesAsync();
-            
+            await _providentFundService.DeleteAsync(id);
             return NoContent();
+        }
+        catch (KeyNotFoundException)
+        {
+            return NotFound();
         }
         catch (Exception ex)
         {
@@ -135,31 +106,13 @@ public class ProvidentFundsController : ControllerBase
         }
     }
 
-    /// <summary>
-    /// Get PF summary with total balances
-    /// </summary>
     [HttpGet("summary")]
-    public async Task<ActionResult<object>> GetPFSummary()
+    public async Task<ActionResult<PFSummaryDto>> GetPFSummary()
     {
         try
         {
-            var funds = await _providentFundRepository.GetAllAsync();
-            
-            var summary = new
-            {
-                TotalAccounts = funds.Count(),
-                TotalBalance = funds.Sum(f => f.CurrentBalance),
-                TotalEmployeeContribution = funds.Sum(f => f.EmployeeContribution),
-                TotalEmployerContribution = funds.Sum(f => f.EmployerContribution),
-                ByType = funds.GroupBy(f => f.PFType)
-                    .Select(g => new
-                    {
-                        Type = g.Key.ToString(),
-                        Count = g.Count(),
-                        TotalBalance = g.Sum(f => f.CurrentBalance)
-                    })
-            };
-            
+            var userId = Guid.Empty; // TODO: Get from JWT
+            var summary = await _providentFundService.GetSummaryAsync(userId);
             return Ok(summary);
         }
         catch (Exception ex)

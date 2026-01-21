@@ -4,6 +4,8 @@ using Microsoft.IdentityModel.Tokens;
 using PersonalFinance.Infrastructure.Data;
 using PersonalFinance.Domain.Interfaces;
 using PersonalFinance.Infrastructure.Repositories;
+using PersonalFinance.Application.Interfaces;
+using PersonalFinance.Application.Services;
 using Serilog;
 using System.Text;
 
@@ -30,6 +32,14 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
 // Add Repository and Unit of Work
 builder.Services.AddScoped(typeof(IRepository<>), typeof(Repository<>));
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
+
+// Add Application Services
+builder.Services.AddScoped<IStockHoldingService, StockHoldingService>();
+builder.Services.AddScoped<IBankAccountService, BankAccountService>();
+builder.Services.AddScoped<IMutualFundService, MutualFundService>();
+builder.Services.AddScoped<IFamilyMemberService, FamilyMemberService>();
+builder.Services.AddScoped<IFixedDepositService, FixedDepositService>();
+builder.Services.AddScoped<IProvidentFundService, ProvidentFundService>();
 
 // Configure CORS
 builder.Services.AddCors(options =>

@@ -1,7 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using PersonalFinance.Domain.Entities;
-using PersonalFinance.Domain.Interfaces;
+using PersonalFinance.Application.DTOs;
+using PersonalFinance.Application.Interfaces;
 
 namespace PersonalFinance.API.Controllers;
 
@@ -10,17 +10,14 @@ namespace PersonalFinance.API.Controllers;
 [Authorize]
 public class BankAccountsController : ControllerBase
 {
-    private readonly IRepository<BankAccount> _bankAccountRepository;
-    private readonly IUnitOfWork _unitOfWork;
+    private readonly IBankAccountService _bankAccountService;
     private readonly ILogger<BankAccountsController> _logger;
 
     public BankAccountsController(
-        IRepository<BankAccount> bankAccountRepository,
-        IUnitOfWork unitOfWork,
+        IBankAccountService bankAccountService,
         ILogger<BankAccountsController> logger)
     {
-        _bankAccountRepository = bankAccountRepository;
-        _unitOfWork = unitOfWork;
+        _bankAccountService = bankAccountService;
         _logger = logger;
     }
 
@@ -28,11 +25,13 @@ public class BankAccountsController : ControllerBase
     /// Get all bank accounts
     /// </summary>
     [HttpGet]
-    public async Task<ActionResult<IEnumerable<BankAccount>>> GetBankAccounts()
+    public async Task<ActionResult<IEnumerable<BankAccountDto>>> GetBankAccounts()
     {
         try
         {
-            var accounts = await _bankAccountRepository.GetAllAsync();
+            // TODO: Get userId from JWT token claims
+            var userId = Guid.Empty;
+            var accounts = await _bankAccountService.GetAllAsync(userId);
             return Ok(accounts);
         }
         catch (Exception ex)
@@ -46,11 +45,11 @@ public class BankAccountsController : ControllerBase
     /// Get a specific bank account by ID
     /// </summary>
     [HttpGet("{id}")]
-    public async Task<ActionResult<BankAccount>> GetBankAccount(Guid id)
+    public async Task<ActionResult<BankAccountDto>> GetBankAccount(Guid id)
     {
         try
         {
-            var account = await _bankAccountRepository.GetByIdAsync(id);
+            var account = await _bankAccountService.GetByIdAsync(id);
             if (account == null)
             {
                 return NotFound();
@@ -68,14 +67,12 @@ public class BankAccountsController : ControllerBase
     /// Create a new bank account
     /// </summary>
     [HttpPost]
-    public async Task<ActionResult<BankAccount>> CreateBankAccount(BankAccount bankAccount)
+    public async Task<ActionResult<BankAccountDto>> CreateBankAccount(CreateBankAccountDto createDto)
     {
         try
         {
-            await _bankAccountRepository.AddAsync(bankAccount);
-            await _unitOfWork.SaveChangesAsync();
-            
-            return CreatedAtAction(nameof(GetBankAccount), new { id = bankAccount.Id }, bankAccount);
+            var account = await _bankAccountService.CreateAsync(createDto);
+            return CreatedAtAction(nameof(GetBankAccount), new { id = account.Id }, account);
         }
         catch (Exception ex)
         {
@@ -88,19 +85,16 @@ public class BankAccountsController : ControllerBase
     /// Update an existing bank account
     /// </summary>
     [HttpPut("{id}")]
-    public async Task<IActionResult> UpdateBankAccount(Guid id, BankAccount bankAccount)
+    public async Task<IActionResult> UpdateBankAccount(Guid id, UpdateBankAccountDto updateDto)
     {
-        if (id != bankAccount.Id)
-        {
-            return BadRequest("ID mismatch");
-        }
-
         try
         {
-            await _bankAccountRepository.UpdateAsync(bankAccount);
-            await _unitOfWork.SaveChangesAsync();
-            
+            await _bankAccountService.UpdateAsync(id, updateDto);
             return NoContent();
+        }
+        catch (KeyNotFoundException)
+        {
+            return NotFound();
         }
         catch (Exception ex)
         {
@@ -117,16 +111,12 @@ public class BankAccountsController : ControllerBase
     {
         try
         {
-            var account = await _bankAccountRepository.GetByIdAsync(id);
-            if (account == null)
-            {
-                return NotFound();
-            }
-
-            await _bankAccountRepository.DeleteAsync(account);
-            await _unitOfWork.SaveChangesAsync();
-            
+            await _bankAccountService.DeleteAsync(id);
             return NoContent();
+        }
+        catch (KeyNotFoundException)
+        {
+            return NotFound();
         }
         catch (Exception ex)
         {

@@ -1,7 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using PersonalFinance.Domain.Entities;
-using PersonalFinance.Domain.Interfaces;
+using PersonalFinance.Application.DTOs;
+using PersonalFinance.Application.Interfaces;
 
 namespace PersonalFinance.API.Controllers;
 
@@ -10,29 +10,24 @@ namespace PersonalFinance.API.Controllers;
 [Authorize]
 public class FixedDepositsController : ControllerBase
 {
-    private readonly IRepository<FixedDeposit> _fixedDepositRepository;
-    private readonly IUnitOfWork _unitOfWork;
+    private readonly IFixedDepositService _fixedDepositService;
     private readonly ILogger<FixedDepositsController> _logger;
 
     public FixedDepositsController(
-        IRepository<FixedDeposit> fixedDepositRepository,
-        IUnitOfWork _unitOfWork,
+        IFixedDepositService fixedDepositService,
         ILogger<FixedDepositsController> logger)
     {
-        _fixedDepositRepository = fixedDepositRepository;
-        this._unitOfWork = _unitOfWork;
+        _fixedDepositService = fixedDepositService;
         _logger = logger;
     }
 
-    /// <summary>
-    /// Get all fixed deposits
-    /// </summary>
     [HttpGet]
-    public async Task<ActionResult<IEnumerable<FixedDeposit>>> GetFixedDeposits()
+    public async Task<ActionResult<IEnumerable<FixedDepositDto>>> GetFixedDeposits()
     {
         try
         {
-            var deposits = await _fixedDepositRepository.GetAllAsync();
+            var userId = Guid.Empty; // TODO: Get from JWT
+            var deposits = await _fixedDepositService.GetAllAsync(userId);
             return Ok(deposits);
         }
         catch (Exception ex)
@@ -42,19 +37,13 @@ public class FixedDepositsController : ControllerBase
         }
     }
 
-    /// <summary>
-    /// Get a specific fixed deposit by ID
-    /// </summary>
     [HttpGet("{id}")]
-    public async Task<ActionResult<FixedDeposit>> GetFixedDeposit(Guid id)
+    public async Task<ActionResult<FixedDepositDto>> GetFixedDeposit(Guid id)
     {
         try
         {
-            var deposit = await _fixedDepositRepository.GetByIdAsync(id);
-            if (deposit == null)
-            {
-                return NotFound();
-            }
+            var deposit = await _fixedDepositService.GetByIdAsync(id);
+            if (deposit == null) return NotFound();
             return Ok(deposit);
         }
         catch (Exception ex)
@@ -64,18 +53,13 @@ public class FixedDepositsController : ControllerBase
         }
     }
 
-    /// <summary>
-    /// Create a new fixed deposit
-    /// </summary>
     [HttpPost]
-    public async Task<ActionResult<FixedDeposit>> CreateFixedDeposit(FixedDeposit fixedDeposit)
+    public async Task<ActionResult<FixedDepositDto>> CreateFixedDeposit(CreateFixedDepositDto createDto)
     {
         try
         {
-            await _fixedDepositRepository.AddAsync(fixedDeposit);
-            await _unitOfWork.SaveChangesAsync();
-            
-            return CreatedAtAction(nameof(GetFixedDeposit), new { id = fixedDeposit.Id }, fixedDeposit);
+            var deposit = await _fixedDepositService.CreateAsync(createDto);
+            return CreatedAtAction(nameof(GetFixedDeposit), new { id = deposit.Id }, deposit);
         }
         catch (Exception ex)
         {
@@ -84,23 +68,17 @@ public class FixedDepositsController : ControllerBase
         }
     }
 
-    /// <summary>
-    /// Update an existing fixed deposit
-    /// </summary>
     [HttpPut("{id}")]
-    public async Task<IActionResult> UpdateFixedDeposit(Guid id, FixedDeposit fixedDeposit)
+    public async Task<IActionResult> UpdateFixedDeposit(Guid id, UpdateFixedDepositDto updateDto)
     {
-        if (id != fixedDeposit.Id)
-        {
-            return BadRequest("ID mismatch");
-        }
-
         try
         {
-            await _fixedDepositRepository.UpdateAsync(fixedDeposit);
-            await _unitOfWork.SaveChangesAsync();
-            
+            await _fixedDepositService.UpdateAsync(id, updateDto);
             return NoContent();
+        }
+        catch (KeyNotFoundException)
+        {
+            return NotFound();
         }
         catch (Exception ex)
         {
@@ -109,24 +87,17 @@ public class FixedDepositsController : ControllerBase
         }
     }
 
-    /// <summary>
-    /// Delete a fixed deposit
-    /// </summary>
     [HttpDelete("{id}")]
     public async Task<IActionResult> DeleteFixedDeposit(Guid id)
     {
         try
         {
-            var deposit = await _fixedDepositRepository.GetByIdAsync(id);
-            if (deposit == null)
-            {
-                return NotFound();
-            }
-
-            await _fixedDepositRepository.DeleteAsync(deposit);
-            await _unitOfWork.SaveChangesAsync();
-            
+            await _fixedDepositService.DeleteAsync(id);
             return NoContent();
+        }
+        catch (KeyNotFoundException)
+        {
+            return NotFound();
         }
         catch (Exception ex)
         {
@@ -135,25 +106,13 @@ public class FixedDepositsController : ControllerBase
         }
     }
 
-    /// <summary>
-    /// Get summary of all fixed deposits
-    /// </summary>
     [HttpGet("summary")]
-    public async Task<ActionResult<object>> GetFixedDepositSummary()
+    public async Task<ActionResult<FixedDepositSummaryDto>> GetFixedDepositSummary()
     {
         try
         {
-            var deposits = await _fixedDepositRepository.GetAllAsync();
-            
-            var summary = new
-            {
-                TotalDeposits = deposits.Count(),
-                TotalPrincipal = deposits.Sum(d => d.PrincipalAmount),
-                TotalMaturityAmount = deposits.Sum(d => d.MaturityAmount),
-                ActiveDeposits = deposits.Count(d => d.Status == Domain.Enums.FDStatus.Active),
-                MaturedDeposits = deposits.Count(d => d.Status == Domain.Enums.FDStatus.Matured)
-            };
-            
+            var userId = Guid.Empty; // TODO: Get from JWT
+            var summary = await _fixedDepositService.GetSummaryAsync(userId);
             return Ok(summary);
         }
         catch (Exception ex)

@@ -1,7 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using PersonalFinance.Domain.Entities;
-using PersonalFinance.Domain.Interfaces;
+using PersonalFinance.Application.DTOs;
+using PersonalFinance.Application.Interfaces;
 
 namespace PersonalFinance.API.Controllers;
 
@@ -10,29 +10,24 @@ namespace PersonalFinance.API.Controllers;
 [Authorize]
 public class FamilyMembersController : ControllerBase
 {
-    private readonly IRepository<FamilyMember> _familyMemberRepository;
-    private readonly IUnitOfWork _unitOfWork;
+    private readonly IFamilyMemberService _familyMemberService;
     private readonly ILogger<FamilyMembersController> _logger;
 
     public FamilyMembersController(
-        IRepository<FamilyMember> familyMemberRepository,
-        IUnitOfWork _unitOfWork,
+        IFamilyMemberService familyMemberService,
         ILogger<FamilyMembersController> logger)
     {
-        _familyMemberRepository = familyMemberRepository;
-        this._unitOfWork = _unitOfWork;
+        _familyMemberService = familyMemberService;
         _logger = logger;
     }
 
-    /// <summary>
-    /// Get all family members
-    /// </summary>
     [HttpGet]
-    public async Task<ActionResult<IEnumerable<FamilyMember>>> GetFamilyMembers()
+    public async Task<ActionResult<IEnumerable<FamilyMemberDto>>> GetFamilyMembers()
     {
         try
         {
-            var members = await _familyMemberRepository.GetAllAsync();
+            var userId = Guid.Empty; // TODO: Get from JWT
+            var members = await _familyMemberService.GetAllAsync(userId);
             return Ok(members);
         }
         catch (Exception ex)
@@ -42,19 +37,13 @@ public class FamilyMembersController : ControllerBase
         }
     }
 
-    /// <summary>
-    /// Get a specific family member by ID
-    /// </summary>
     [HttpGet("{id}")]
-    public async Task<ActionResult<FamilyMember>> GetFamilyMember(Guid id)
+    public async Task<ActionResult<FamilyMemberDto>> GetFamilyMember(Guid id)
     {
         try
         {
-            var member = await _familyMemberRepository.GetByIdAsync(id);
-            if (member == null)
-            {
-                return NotFound();
-            }
+            var member = await _familyMemberService.GetByIdAsync(id);
+            if (member == null) return NotFound();
             return Ok(member);
         }
         catch (Exception ex)
@@ -64,18 +53,13 @@ public class FamilyMembersController : ControllerBase
         }
     }
 
-    /// <summary>
-    /// Create a new family member
-    /// </summary>
     [HttpPost]
-    public async Task<ActionResult<FamilyMember>> CreateFamilyMember(FamilyMember familyMember)
+    public async Task<ActionResult<FamilyMemberDto>> CreateFamilyMember(CreateFamilyMemberDto createDto)
     {
         try
         {
-            await _familyMemberRepository.AddAsync(familyMember);
-            await _unitOfWork.SaveChangesAsync();
-            
-            return CreatedAtAction(nameof(GetFamilyMember), new { id = familyMember.Id }, familyMember);
+            var member = await _familyMemberService.CreateAsync(createDto);
+            return CreatedAtAction(nameof(GetFamilyMember), new { id = member.Id }, member);
         }
         catch (Exception ex)
         {
@@ -84,23 +68,17 @@ public class FamilyMembersController : ControllerBase
         }
     }
 
-    /// <summary>
-    /// Update an existing family member
-    /// </summary>
     [HttpPut("{id}")]
-    public async Task<IActionResult> UpdateFamilyMember(Guid id, FamilyMember familyMember)
+    public async Task<IActionResult> UpdateFamilyMember(Guid id, UpdateFamilyMemberDto updateDto)
     {
-        if (id != familyMember.Id)
-        {
-            return BadRequest("ID mismatch");
-        }
-
         try
         {
-            await _familyMemberRepository.UpdateAsync(familyMember);
-            await _unitOfWork.SaveChangesAsync();
-            
+            await _familyMemberService.UpdateAsync(id, updateDto);
             return NoContent();
+        }
+        catch (KeyNotFoundException)
+        {
+            return NotFound();
         }
         catch (Exception ex)
         {
@@ -109,24 +87,17 @@ public class FamilyMembersController : ControllerBase
         }
     }
 
-    /// <summary>
-    /// Delete a family member
-    /// </summary>
     [HttpDelete("{id}")]
     public async Task<IActionResult> DeleteFamilyMember(Guid id)
     {
         try
         {
-            var member = await _familyMemberRepository.GetByIdAsync(id);
-            if (member == null)
-            {
-                return NotFound();
-            }
-
-            await _familyMemberRepository.DeleteAsync(member);
-            await _unitOfWork.SaveChangesAsync();
-            
+            await _familyMemberService.DeleteAsync(id);
             return NoContent();
+        }
+        catch (KeyNotFoundException)
+        {
+            return NotFound();
         }
         catch (Exception ex)
         {
