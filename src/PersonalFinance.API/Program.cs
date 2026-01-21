@@ -40,6 +40,8 @@ builder.Services.AddScoped<IMutualFundService, MutualFundService>();
 builder.Services.AddScoped<IFamilyMemberService, FamilyMemberService>();
 builder.Services.AddScoped<IFixedDepositService, FixedDepositService>();
 builder.Services.AddScoped<IProvidentFundService, ProvidentFundService>();
+builder.Services.AddScoped<IAuthService, AuthService>();
+builder.Services.AddScoped<IUserService, UserService>();
 
 // Configure CORS
 builder.Services.AddCors(options =>
