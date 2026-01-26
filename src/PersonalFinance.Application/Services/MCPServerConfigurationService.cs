@@ -1,3 +1,5 @@
+using System.Text;
+using System.Text.Json;
 using Microsoft.Extensions.Logging;
 using PersonalFinance.Application.DTOs;
 using PersonalFinance.Application.Interfaces;
@@ -14,15 +16,18 @@ public class MCPServerConfigurationService : IMCPServerConfigurationService
 {
     private readonly IRepository<MCPServerConfiguration> _configRepository;
     private readonly IUnitOfWork _unitOfWork;
+    private readonly IHttpClientFactory _httpClientFactory;
     private readonly ILogger<MCPServerConfigurationService> _logger;
 
     public MCPServerConfigurationService(
         IRepository<MCPServerConfiguration> configRepository,
         IUnitOfWork unitOfWork,
+        IHttpClientFactory httpClientFactory,
         ILogger<MCPServerConfigurationService> logger)
     {
         _configRepository = configRepository;
         _unitOfWork = unitOfWork;
+        _httpClientFactory = httpClientFactory;
         _logger = logger;
     }
 
@@ -144,26 +149,74 @@ public class MCPServerConfigurationService : IMCPServerConfigurationService
         
         try
         {
-            // TODO: Implement actual connection test based on provider type
-            // For now, just return a mock successful test
+            using var httpClient = _httpClientFactory.CreateClient();
+            httpClient.Timeout = TimeSpan.FromSeconds(10);
             
+            // Test connection by sending a simple MCP tools/list request
+            var testRequest = new
+            {
+                method = "tools/list",
+                @params = new { }
+            };
+
+            var requestMessage = new HttpRequestMessage(HttpMethod.Post, config.ApiEndpoint)
+            {
+                Content = new StringContent(JsonSerializer.Serialize(testRequest), Encoding.UTF8, "application/json")
+            };
+
+            if (!string.IsNullOrEmpty(config.ApiKey))
+            {
+                requestMessage.Headers.Add("Authorization", $"Bearer {config.ApiKey}");
+            }
+
+            _logger.LogInformation("Testing connection to MCP server at {Endpoint}", config.ApiEndpoint);
+            
+            var response = await httpClient.SendAsync(requestMessage);
             var responseTime = DateTime.UtcNow - startTime;
             
-            config.ConnectionStatus = MCPConnectionStatus.Connected;
-            config.LastConnectedAt = DateTime.UtcNow;
-            config.LastErrorMessage = null;
-            
-            await _configRepository.UpdateAsync(config);
-            await _unitOfWork.SaveChangesAsync();
-
-            return new MCPConnectionTestDto
+            if (response.IsSuccessStatusCode)
             {
-                ConfigurationId = id,
-                IsConnected = true,
-                Status = "Connected successfully",
-                TestedAt = DateTime.UtcNow,
-                ResponseTime = responseTime
-            };
+                config.ConnectionStatus = MCPConnectionStatus.Connected;
+                config.LastConnectedAt = DateTime.UtcNow;
+                config.LastErrorMessage = null;
+                
+                await _configRepository.UpdateAsync(config);
+                await _unitOfWork.SaveChangesAsync();
+
+                _logger.LogInformation("Successfully connected to MCP server {ConfigId} in {ResponseTime}ms", 
+                    id, responseTime.TotalMilliseconds);
+
+                return new MCPConnectionTestDto
+                {
+                    ConfigurationId = id,
+                    IsConnected = true,
+                    Status = $"Connected successfully (HTTP {(int)response.StatusCode})",
+                    TestedAt = DateTime.UtcNow,
+                    ResponseTime = responseTime
+                };
+            }
+            else
+            {
+                var errorMessage = $"HTTP {(int)response.StatusCode}: {response.ReasonPhrase}";
+                
+                config.ConnectionStatus = MCPConnectionStatus.Error;
+                config.LastErrorMessage = errorMessage;
+                
+                await _configRepository.UpdateAsync(config);
+                await _unitOfWork.SaveChangesAsync();
+
+                _logger.LogWarning("Connection test failed for MCP server {ConfigId}: {Error}", id, errorMessage);
+
+                return new MCPConnectionTestDto
+                {
+                    ConfigurationId = id,
+                    IsConnected = false,
+                    Status = "Connection failed",
+                    ErrorMessage = errorMessage,
+                    TestedAt = DateTime.UtcNow,
+                    ResponseTime = responseTime
+                };
+            }
         }
         catch (Exception ex)
         {
