@@ -126,3 +126,48 @@ public class AIProviderStatusDto
     public string? Status { get; set; }
     public int? RemainingRequests { get; set; }
 }
+
+// Batch Analysis DTOs
+public class BatchAnalysisRequestDto
+{
+    public List<string> Symbols { get; set; } = new();
+    public StockAnalysisType AnalysisType { get; set; } = StockAnalysisType.QuickOverview;
+    public Guid? AIModelConfigurationId { get; set; }
+    public bool UseCache { get; set; } = true;
+}
+
+public class BatchAnalysisResponseDto
+{
+    public Guid BatchId { get; set; }
+    public int TotalSymbols { get; set; }
+    public int CompletedCount { get; set; }
+    public int FailedCount { get; set; }
+    public int CachedCount { get; set; }
+    public List<StockAnalysisDto> Results { get; set; } = new();
+    public DateTime StartedAt { get; set; }
+    public DateTime? CompletedAt { get; set; }
+    public string Status { get; set; } = "InProgress";
+}
+
+// Analysis History DTOs
+public class AnalysisHistoryRequestDto
+{
+    public string? Symbol { get; set; }
+    public StockAnalysisType? AnalysisType { get; set; }
+    public AnalysisStatus? Status { get; set; }
+    public DateTime? FromDate { get; set; }
+    public DateTime? ToDate { get; set; }
+    public int Page { get; set; } = 1;
+    public int PageSize { get; set; } = 20;
+    public string? SortBy { get; set; } = "CreatedAt";
+    public bool SortDescending { get; set; } = true;
+}
+
+public class AnalysisHistoryResponseDto
+{
+    public List<StockAnalysisDto> Analyses { get; set; } = new();
+    public int TotalCount { get; set; }
+    public int Page { get; set; }
+    public int PageSize { get; set; }
+    public int TotalPages { get; set; }
+}

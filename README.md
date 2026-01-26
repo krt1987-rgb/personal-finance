@@ -186,6 +186,9 @@ The application includes a powerful AI-driven stock research assistant that prov
 - **Smart Caching**: Reduces API costs by caching recent analyses
 - **Interactive Research**: Ask custom questions about any stock
 - **One-Click Access**: Research any stock directly from your portfolio
+- **Batch Analysis**: Analyze multiple stocks at once with progress tracking
+- **Confidence Scoring**: AI-powered confidence scores based on analysis quality
+- **Analysis History**: Track and filter all past analyses with pagination
 
 ### Quick Start
 
@@ -216,6 +219,53 @@ curl -X POST http://localhost:5000/api/stockanalysis \
 ```
 
 For detailed configuration and usage, see the [AI Configuration Guide](AI_CONFIGURATION_GUIDE.md).
+
+## 🔌 MCP Server Integration (Foundation)
+
+The application now includes foundation support for MCP (Model Context Protocol) server integration for real-time market data.
+
+### Features
+- **Multi-Provider Support**: Yahoo Finance, Alpha Vantage, NSE India, BSE India, Custom servers
+- **Data Types**: Real-time prices, historical data, fundamentals, news, financials, technical indicators
+- **Connection Testing**: Test MCP server connectivity before use
+- **Batch Data Fetching**: Fetch data for multiple symbols at once
+- **Rate Limiting**: Configure requests per minute/day
+
+### Quick Start
+
+1. **Configure an MCP Server**
+```bash
+curl -X POST http://localhost:5000/api/mcpserver \
+  -H "Authorization: Bearer YOUR_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "Yahoo Finance MCP",
+    "providerType": 0,
+    "apiEndpoint": "http://mcp-server:8080",
+    "apiKey": "your-api-key",
+    "isDefault": true,
+    "supportedDataTypes": [0, 1, 2]
+  }'
+```
+
+2. **Test Connection**
+```bash
+curl -X POST http://localhost:5000/api/mcpserver/{id}/test \
+  -H "Authorization: Bearer YOUR_TOKEN"
+```
+
+3. **Fetch Data**
+```bash
+curl -X POST http://localhost:5000/api/mcpserver/fetch \
+  -H "Authorization: Bearer YOUR_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "symbol": "AAPL",
+    "dataType": 0
+  }'
+```
+
+**Note**: MCP integration is in foundation stage. Actual protocol implementation pending.
 
 ## 📚 API Documentation
 
@@ -262,6 +312,19 @@ Once the application is running, visit the Swagger UI at `https://localhost:5001
 - `GET /api/stockanalysis/symbol/{symbol}` - Get all analyses for a symbol
 - `GET /api/stockanalysis/quick-overview/{symbol}` - Get quick AI overview
 - `POST /api/stockanalysis/research` - Interactive AI stock research
+- `POST /api/stockanalysis/batch` - **NEW: Batch analysis for multiple stocks**
+- `POST /api/stockanalysis/history` - **NEW: Get analysis history with filters**
+
+#### MCP Server Integration 🔌
+- `GET /api/mcpserver` - Get all MCP server configurations
+- `POST /api/mcpserver` - Create new MCP server configuration
+- `GET /api/mcpserver/{id}` - Get MCP configuration by ID
+- `GET /api/mcpserver/default` - Get default MCP configuration
+- `PUT /api/mcpserver/{id}` - Update MCP configuration
+- `DELETE /api/mcpserver/{id}` - Delete MCP configuration
+- `POST /api/mcpserver/{id}/test` - Test MCP server connection
+- `POST /api/mcpserver/fetch` - Fetch data from MCP server
+- `POST /api/mcpserver/fetch/batch` - Fetch batch data from MCP server
 
 ## 🔒 Security
 
@@ -378,12 +441,15 @@ For comprehensive migration instructions including Supabase configuration, see [
 - 🔄 Dashboard with charts
 - 🔄 Live stock price integration
 
-### Phase 3 (In Progress)
+### Phase 3 (Completed & In Progress)
 - ✅ **AI-powered stock research assistant**
 - ✅ **Multi-provider AI configuration**
 - ✅ **Stock analysis with caching**
-- 📋 AI-powered investment recommendations
-- 📋 MCP server integration
+- ✅ **Confidence score algorithm**
+- ✅ **Batch analysis for multiple stocks**
+- ✅ **Enhanced analysis history tracking with filtering**
+- ✅ **MCP server integration foundation**
+- 📋 Live stock price integration via MCP
 - 📋 Predictive analytics
 - 📋 Automated reporting
 - 📋 Mobile app (React Native)

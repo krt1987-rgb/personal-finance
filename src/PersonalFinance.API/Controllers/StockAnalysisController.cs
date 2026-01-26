@@ -159,4 +159,47 @@ public class StockAnalysisController : ControllerBase
             return StatusCode(500, "An error occurred while getting the quick overview");
         }
     }
+
+    /// <summary>
+    /// Create batch analysis for multiple stocks
+    /// </summary>
+    [HttpPost("batch")]
+    public async Task<ActionResult<BatchAnalysisResponseDto>> CreateBatchAnalysis(BatchAnalysisRequestDto request)
+    {
+        try
+        {
+            var userId = User.GetUserId();
+            var result = await _stockAnalysisService.CreateBatchAnalysisAsync(userId, request);
+            return Ok(result);
+        }
+        catch (InvalidOperationException ex)
+        {
+            _logger.LogWarning(ex, "Invalid batch analysis request: {Message}", ex.Message);
+            return BadRequest(ex.Message);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error creating batch analysis");
+            return StatusCode(500, "An error occurred while creating the batch analysis");
+        }
+    }
+
+    /// <summary>
+    /// Get analysis history with filtering, sorting, and pagination
+    /// </summary>
+    [HttpPost("history")]
+    public async Task<ActionResult<AnalysisHistoryResponseDto>> GetAnalysisHistory(AnalysisHistoryRequestDto request)
+    {
+        try
+        {
+            var userId = User.GetUserId();
+            var result = await _stockAnalysisService.GetAnalysisHistoryAsync(userId, request);
+            return Ok(result);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error retrieving analysis history");
+            return StatusCode(500, "An error occurred while retrieving the analysis history");
+        }
+    }
 }
