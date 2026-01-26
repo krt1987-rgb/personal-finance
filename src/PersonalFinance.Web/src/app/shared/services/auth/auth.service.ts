@@ -3,6 +3,7 @@ import { HttpClient } from '@angular/common/http';
 import { Observable, BehaviorSubject } from 'rxjs';
 import { tap } from 'rxjs/operators';
 import { User } from '../../models';
+import { environment } from '../../../../environments/environment';
 
 export interface LoginRequest {
   email: string;
@@ -25,8 +26,7 @@ export interface AuthResponse {
 })
 export class AuthService {
   private readonly http = inject(HttpClient);
-  // TODO: Move to environment config
-  private readonly apiUrl = '/api';
+  private readonly apiUrl = environment.apiUrl;
   private readonly tokenKey = 'auth_token';
   private readonly userKey = 'user_info';
   
