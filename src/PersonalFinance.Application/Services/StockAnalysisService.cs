@@ -16,6 +16,9 @@ public class StockAnalysisService : IStockAnalysisService
     private readonly IAIService _aiService;
     private readonly ILogger<StockAnalysisService> _logger;
 
+    // Confidence score constants
+    private const decimal SECTION_SCORE_WEIGHT = 6.25m; // Each section contributes 25% / 4 sections = 6.25%
+
     public StockAnalysisService(
         IRepository<StockAnalysis> analysisRepository,
         IRepository<AIModelConfiguration> configRepository,
@@ -101,13 +104,9 @@ public class StockAnalysisService : IStockAnalysisService
             analysis.Recommendation = structuredResult.Recommendation;
             analysis.Status = AnalysisStatus.Completed;
             analysis.CompletedAt = DateTime.UtcNow;
-            // Confidence scoring needs proper implementation based on:
-            // - Response completeness
-            // - Sentiment analysis consistency
-            // - Data source reliability
-            // - Model performance metrics
-            // For now, leaving as null until metrics are defined
-            analysis.ConfidenceScore = null;
+            
+            // Calculate confidence score
+            analysis.ConfidenceScore = CalculateConfidenceScore(analysisResult, structuredResult);
             
             // Set cache expiration based on analysis type
             analysis.CachedUntil = DateTime.UtcNow.AddHours(GetCacheDurationHours(request.AnalysisType));
@@ -318,5 +317,251 @@ public class StockAnalysisService : IStockAnalysisService
             ErrorMessage = analysis.ErrorMessage,
             IsCached = false
         };
+    }
+
+    public async Task<BatchAnalysisResponseDto> CreateBatchAnalysisAsync(Guid userId, BatchAnalysisRequestDto request)
+    {
+        var batchId = Guid.NewGuid();
+        var startedAt = DateTime.UtcNow;
+        var results = new List<StockAnalysisDto>();
+        var cachedCount = 0;
+        var failedCount = 0;
+
+        _logger.LogInformation("Starting batch analysis for {Count} symbols", request.Symbols.Count);
+
+        foreach (var symbol in request.Symbols)
+        {
+            try
+            {
+                var analysisRequest = new CreateStockAnalysisRequestDto
+                {
+                    Symbol = symbol,
+                    AnalysisType = request.AnalysisType,
+                    AIModelConfigurationId = request.AIModelConfigurationId,
+                    UseCache = request.UseCache
+                };
+
+                var analysis = await CreateAnalysisAsync(userId, analysisRequest);
+                results.Add(analysis);
+
+                if (analysis.IsCached)
+                {
+                    cachedCount++;
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Failed to analyze symbol {Symbol} in batch", symbol);
+                failedCount++;
+                
+                // Add failed analysis to results
+                results.Add(new StockAnalysisDto
+                {
+                    Symbol = symbol,
+                    Status = AnalysisStatus.Failed,
+                    ErrorMessage = ex.Message,
+                    CreatedAt = DateTime.UtcNow
+                });
+            }
+        }
+
+        return new BatchAnalysisResponseDto
+        {
+            BatchId = batchId,
+            TotalSymbols = request.Symbols.Count,
+            CompletedCount = results.Count(r => r.Status == AnalysisStatus.Completed),
+            FailedCount = failedCount,
+            CachedCount = cachedCount,
+            Results = results,
+            StartedAt = startedAt,
+            CompletedAt = DateTime.UtcNow,
+            Status = "Completed"
+        };
+    }
+
+    public async Task<AnalysisHistoryResponseDto> GetAnalysisHistoryAsync(Guid userId, AnalysisHistoryRequestDto request)
+    {
+        // Build query
+        var query = await _analysisRepository.FindAsync(a => 
+            a.UserId == userId && 
+            !a.IsDeleted);
+
+        // Apply filters
+        if (!string.IsNullOrEmpty(request.Symbol))
+        {
+            query = query.Where(a => a.Symbol == request.Symbol.ToUpper());
+        }
+
+        if (request.AnalysisType.HasValue)
+        {
+            query = query.Where(a => a.AnalysisType == request.AnalysisType.Value);
+        }
+
+        if (request.Status.HasValue)
+        {
+            query = query.Where(a => a.Status == request.Status.Value);
+        }
+
+        if (request.FromDate.HasValue)
+        {
+            query = query.Where(a => a.CreatedAt >= request.FromDate.Value);
+        }
+
+        if (request.ToDate.HasValue)
+        {
+            query = query.Where(a => a.CreatedAt <= request.ToDate.Value);
+        }
+
+        // Get total count
+        var totalCount = query.Count();
+
+        // Apply sorting
+        query = request.SortBy?.ToLower() switch
+        {
+            "symbol" => request.SortDescending ? query.OrderByDescending(a => a.Symbol) : query.OrderBy(a => a.Symbol),
+            "completedat" => request.SortDescending ? query.OrderByDescending(a => a.CompletedAt) : query.OrderBy(a => a.CompletedAt),
+            "confidencescore" => request.SortDescending ? query.OrderByDescending(a => a.ConfidenceScore) : query.OrderBy(a => a.ConfidenceScore),
+            _ => request.SortDescending ? query.OrderByDescending(a => a.CreatedAt) : query.OrderBy(a => a.CreatedAt)
+        };
+
+        // Apply pagination
+        var analyses = query
+            .Skip((request.Page - 1) * request.PageSize)
+            .Take(request.PageSize)
+            .Select(MapToDto)
+            .ToList();
+
+        return new AnalysisHistoryResponseDto
+        {
+            Analyses = analyses,
+            TotalCount = totalCount,
+            Page = request.Page,
+            PageSize = request.PageSize,
+            TotalPages = (int)Math.Ceiling(totalCount / (double)request.PageSize)
+        };
+    }
+
+    private decimal CalculateConfidenceScore(string analysisResult, 
+        (string Summary, string KeyInsights, string Risks, string Recommendation) structuredResult)
+    {
+        decimal score = 0;
+        var factors = new List<decimal>();
+
+        // Factor 1: Response completeness (0-25 points)
+        var completenessScore = CalculateCompletenessScore(structuredResult);
+        factors.Add(completenessScore);
+
+        // Factor 2: Response length and detail (0-25 points)
+        var detailScore = CalculateDetailScore(analysisResult);
+        factors.Add(detailScore);
+
+        // Factor 3: Structured data quality (0-25 points)
+        var structureScore = CalculateStructureScore(structuredResult);
+        factors.Add(structureScore);
+
+        // Factor 4: Sentiment consistency (0-25 points)
+        var consistencyScore = CalculateSentimentConsistency(structuredResult);
+        factors.Add(consistencyScore);
+
+        // Calculate weighted average
+        score = factors.Average();
+
+        // Normalize to 0-100 scale
+        return Math.Round(Math.Min(100, Math.Max(0, score)), 2);
+    }
+
+    private decimal CalculateCompletenessScore((string Summary, string KeyInsights, string Risks, string Recommendation) result)
+    {
+        decimal score = 0;
+        
+        // Check if each section is present and not N/A
+        if (!string.IsNullOrWhiteSpace(result.Summary) && result.Summary != "N/A")
+            score += SECTION_SCORE_WEIGHT;
+        
+        if (!string.IsNullOrWhiteSpace(result.KeyInsights) && result.KeyInsights != "N/A")
+            score += SECTION_SCORE_WEIGHT;
+        
+        if (!string.IsNullOrWhiteSpace(result.Risks) && result.Risks != "N/A")
+            score += SECTION_SCORE_WEIGHT;
+        
+        if (!string.IsNullOrWhiteSpace(result.Recommendation) && result.Recommendation != "N/A")
+            score += SECTION_SCORE_WEIGHT;
+
+        return score;
+    }
+
+    private decimal CalculateDetailScore(string analysisResult)
+    {
+        if (string.IsNullOrWhiteSpace(analysisResult))
+            return 0;
+
+        var wordCount = analysisResult.Split(new[] { ' ', '\n', '\r' }, StringSplitOptions.RemoveEmptyEntries).Length;
+        
+        // Score based on word count
+        // 0-50 words: 0-5 points
+        // 51-150 words: 5-15 points
+        // 151-300 words: 15-20 points
+        // 301+ words: 20-25 points
+        
+        decimal score = wordCount switch
+        {
+            <= 50 => Math.Min(5, wordCount * 0.1m),
+            <= 150 => 5 + Math.Min(10, (wordCount - 50) * 0.1m),
+            <= 300 => 15 + Math.Min(5, (wordCount - 150) * 0.033m),
+            _ => 25
+        };
+
+        return score;
+    }
+
+    private decimal CalculateStructureScore((string Summary, string KeyInsights, string Risks, string Recommendation) result)
+    {
+        decimal score = 0;
+        
+        // Check length and quality of each section
+        if (result.Summary?.Length > 20)
+            score += SECTION_SCORE_WEIGHT;
+        
+        if (result.KeyInsights?.Length > 30)
+            score += SECTION_SCORE_WEIGHT;
+        
+        if (result.Risks?.Length > 20)
+            score += SECTION_SCORE_WEIGHT;
+        
+        if (result.Recommendation?.Length > 20)
+            score += SECTION_SCORE_WEIGHT;
+
+        return score;
+    }
+
+    private decimal CalculateSentimentConsistency((string Summary, string KeyInsights, string Risks, string Recommendation) result)
+    {
+        // Check for consistency between recommendation and risks
+        var recommendation = result.Recommendation?.ToLower() ?? "";
+        var risks = result.Risks?.ToLower() ?? "";
+        
+        decimal score = 12.5m; // Base score
+
+        // Positive indicators in recommendation
+        var positiveWords = new[] { "buy", "strong buy", "invest", "positive", "good", "excellent", "recommended" };
+        var negativeWords = new[] { "sell", "avoid", "negative", "poor", "risky", "not recommended", "stay away" };
+        
+        var hasPositiveRec = positiveWords.Any(w => recommendation.Contains(w));
+        var hasNegativeRec = negativeWords.Any(w => recommendation.Contains(w));
+        
+        // High risk should align with negative recommendation
+        if (risks.Contains("high risk") || risks.Contains("significant risk"))
+        {
+            if (hasNegativeRec || recommendation.Contains("caution"))
+                score += 12.5m; // Consistent
+        }
+        else
+        {
+            // Low/moderate risk should align with positive or neutral recommendation
+            if (hasPositiveRec || recommendation.Contains("consider"))
+                score += 12.5m; // Consistent
+        }
+
+        return score;
     }
 }

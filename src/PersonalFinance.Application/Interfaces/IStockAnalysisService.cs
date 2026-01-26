@@ -9,4 +9,10 @@ public interface IStockAnalysisService
     Task<IEnumerable<StockAnalysisDto>> GetAnalysesBySymbolAsync(Guid userId, string symbol);
     Task<IEnumerable<StockAnalysisDto>> GetUserAnalysesAsync(Guid userId, int limit = 50);
     Task<StockResearchResponseDto> ResearchStockAsync(Guid userId, StockResearchRequestDto request);
+    
+    // Batch Analysis
+    Task<BatchAnalysisResponseDto> CreateBatchAnalysisAsync(Guid userId, BatchAnalysisRequestDto request);
+    
+    // Enhanced History
+    Task<AnalysisHistoryResponseDto> GetAnalysisHistoryAsync(Guid userId, AnalysisHistoryRequestDto request);
 }
