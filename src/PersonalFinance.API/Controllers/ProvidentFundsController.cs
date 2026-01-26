@@ -12,13 +12,16 @@ namespace PersonalFinance.API.Controllers;
 public class ProvidentFundsController : ControllerBase
 {
     private readonly IProvidentFundService _providentFundService;
+    private readonly IImportService _importService;
     private readonly ILogger<ProvidentFundsController> _logger;
 
     public ProvidentFundsController(
         IProvidentFundService providentFundService,
+        IImportService importService,
         ILogger<ProvidentFundsController> logger)
     {
         _providentFundService = providentFundService;
+        _importService = importService;
         _logger = logger;
     }
 
@@ -120,6 +123,32 @@ public class ProvidentFundsController : ControllerBase
         {
             _logger.LogError(ex, "Error retrieving PF summary");
             return StatusCode(500, "An error occurred while retrieving the summary");
+        }
+    }
+
+    /// <summary>
+    /// Import provident funds from CSV or Excel file
+    /// </summary>
+    [HttpPost("import")]
+    public async Task<ActionResult<ImportResultDto>> ImportProvidentFunds(IFormFile file)
+    {
+        try
+        {
+            if (file == null || file.Length == 0)
+            {
+                return BadRequest("No file uploaded");
+            }
+
+            var userId = User.GetUserId();
+            using var stream = file.OpenReadStream();
+            var result = await _importService.ImportProvidentFundsAsync(stream, file.FileName, userId);
+            
+            return Ok(result);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error importing provident funds");
+            return StatusCode(500, "An error occurred while importing provident funds");
         }
     }
 }

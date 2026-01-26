@@ -12,13 +12,16 @@ namespace PersonalFinance.API.Controllers;
 public class StockHoldingsController : ControllerBase
 {
     private readonly IStockHoldingService _stockHoldingService;
+    private readonly IImportService _importService;
     private readonly ILogger<StockHoldingsController> _logger;
 
     public StockHoldingsController(
         IStockHoldingService stockHoldingService,
+        IImportService importService,
         ILogger<StockHoldingsController> logger)
     {
         _stockHoldingService = stockHoldingService;
+        _importService = importService;
         _logger = logger;
     }
 
@@ -141,6 +144,32 @@ public class StockHoldingsController : ControllerBase
         {
             _logger.LogError(ex, "Error retrieving portfolio summary");
             return StatusCode(500, "An error occurred while retrieving portfolio summary");
+        }
+    }
+
+    /// <summary>
+    /// Import stock holdings from CSV or Excel file
+    /// </summary>
+    [HttpPost("import")]
+    public async Task<ActionResult<ImportResultDto>> ImportStockHoldings(IFormFile file)
+    {
+        try
+        {
+            if (file == null || file.Length == 0)
+            {
+                return BadRequest("No file uploaded");
+            }
+
+            var userId = User.GetUserId();
+            using var stream = file.OpenReadStream();
+            var result = await _importService.ImportStockHoldingsAsync(stream, file.FileName, userId);
+            
+            return Ok(result);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error importing stock holdings");
+            return StatusCode(500, "An error occurred while importing stock holdings");
         }
     }
 }

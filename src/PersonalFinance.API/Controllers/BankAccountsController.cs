@@ -12,13 +12,16 @@ namespace PersonalFinance.API.Controllers;
 public class BankAccountsController : ControllerBase
 {
     private readonly IBankAccountService _bankAccountService;
+    private readonly IImportService _importService;
     private readonly ILogger<BankAccountsController> _logger;
 
     public BankAccountsController(
         IBankAccountService bankAccountService,
+        IImportService importService,
         ILogger<BankAccountsController> logger)
     {
         _bankAccountService = bankAccountService;
+        _importService = importService;
         _logger = logger;
     }
 
@@ -122,6 +125,32 @@ public class BankAccountsController : ControllerBase
         {
             _logger.LogError(ex, "Error deleting bank account {AccountId}", id);
             return StatusCode(500, "An error occurred while deleting the bank account");
+        }
+    }
+
+    /// <summary>
+    /// Import bank accounts from CSV or Excel file
+    /// </summary>
+    [HttpPost("import")]
+    public async Task<ActionResult<ImportResultDto>> ImportBankAccounts(IFormFile file)
+    {
+        try
+        {
+            if (file == null || file.Length == 0)
+            {
+                return BadRequest("No file uploaded");
+            }
+
+            var userId = User.GetUserId();
+            using var stream = file.OpenReadStream();
+            var result = await _importService.ImportBankAccountsAsync(stream, file.FileName, userId);
+            
+            return Ok(result);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error importing bank accounts");
+            return StatusCode(500, "An error occurred while importing bank accounts");
         }
     }
 }

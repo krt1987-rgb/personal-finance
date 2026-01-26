@@ -12,13 +12,16 @@ namespace PersonalFinance.API.Controllers;
 public class FamilyMembersController : ControllerBase
 {
     private readonly IFamilyMemberService _familyMemberService;
+    private readonly IImportService _importService;
     private readonly ILogger<FamilyMembersController> _logger;
 
     public FamilyMembersController(
         IFamilyMemberService familyMemberService,
+        IImportService importService,
         ILogger<FamilyMembersController> logger)
     {
         _familyMemberService = familyMemberService;
+        _importService = importService;
         _logger = logger;
     }
 
@@ -104,6 +107,32 @@ public class FamilyMembersController : ControllerBase
         {
             _logger.LogError(ex, "Error deleting family member {MemberId}", id);
             return StatusCode(500, "An error occurred while deleting the family member");
+        }
+    }
+
+    /// <summary>
+    /// Import family members from CSV or Excel file
+    /// </summary>
+    [HttpPost("import")]
+    public async Task<ActionResult<ImportResultDto>> ImportFamilyMembers(IFormFile file)
+    {
+        try
+        {
+            if (file == null || file.Length == 0)
+            {
+                return BadRequest("No file uploaded");
+            }
+
+            var userId = User.GetUserId();
+            using var stream = file.OpenReadStream();
+            var result = await _importService.ImportFamilyMembersAsync(stream, file.FileName, userId);
+            
+            return Ok(result);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error importing family members");
+            return StatusCode(500, "An error occurred while importing family members");
         }
     }
 }
