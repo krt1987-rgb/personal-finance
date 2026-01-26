@@ -65,10 +65,12 @@ An enterprise-grade personal finance management application built with .NET Core
 ```
 PersonalFinance/
 ├── src/
-│   ├── PersonalFinance.Domain/          # Domain entities, enums, and interfaces
-│   ├── PersonalFinance.Application/     # Business logic, DTOs, and services
-│   ├── PersonalFinance.Infrastructure/  # Data access, repositories, and DbContext
-│   └── PersonalFinance.API/            # Web API controllers and configuration
+│   ├── PersonalFinance.Domain/              # Domain entities, enums, and interfaces
+│   ├── PersonalFinance.Application/         # Business logic, DTOs, and services
+│   ├── PersonalFinance.Infrastructure/      # Data access, repositories, and DbContext
+│   ├── PersonalFinance.API/                 # Web API controllers and configuration
+│   ├── PersonalFinance.DatabaseMigration/   # DBUp database migration tool
+│   └── PersonalFinance.Web/                 # Angular frontend
 └── tests/
     ├── PersonalFinance.UnitTests/
     └── PersonalFinance.IntegrationTests/
@@ -80,6 +82,7 @@ PersonalFinance/
 - **.NET 10**: Latest .NET framework
 - **ASP.NET Core Web API**: RESTful API
 - **Entity Framework Core 10**: ORM
+- **DBUp**: SQL-based database migrations
 - **PostgreSQL**: Primary database
 - **JWT Bearer Authentication**: Security
 - **Serilog**: Logging
@@ -143,11 +146,34 @@ Edit `src/PersonalFinance.API/appsettings.json`:
 
 ### 4. Run Database Migrations
 
+#### Option A: Using DBUp (Recommended)
+
+```bash
+# Navigate to the database migration project
+cd src/PersonalFinance.DatabaseMigration
+
+# Run migrations
+dotnet run
+
+# Or with custom connection string
+dotnet run "Host=localhost;Port=5432;Database=PersonalFinanceDb;Username=postgres;Password=postgres"
+```
+
+#### Option B: Using Docker
+
+```bash
+# Run just the database migration
+docker-compose --profile migration up db-migration
+```
+
+#### Option C: Using EF Core (Legacy)
+
 ```bash
 cd src/PersonalFinance.API
-dotnet ef migrations add InitialCreate --project ../PersonalFinance.Infrastructure
-dotnet ef database update
+dotnet ef database update --project ../PersonalFinance.Infrastructure
 ```
+
+For detailed migration instructions, see [DATABASE_MIGRATION_GUIDE.md](DATABASE_MIGRATION_GUIDE.md).
 
 ### 5. Run the Application
 
@@ -346,86 +372,111 @@ dotnet test tests/PersonalFinance.IntegrationTests
 
 ## 📦 Database Migrations
 
-### Prerequisites: Install EF Core Tools
+This project uses **DBUp** for database migrations, providing a SQL-first approach with version-controlled scripts.
 
-**Option 1: Install Globally (Recommended)**
+### Quick Start with DBUp (Recommended)
+
+#### Run Migrations
+
 ```bash
-dotnet tool install --global dotnet-ef --version 10.0.2
+# Navigate to migration project
+cd src/PersonalFinance.DatabaseMigration
+
+# Run migrations (uses default connection string or environment variable)
+dotnet run
+
+# Or with custom connection string
+dotnet run "Host=localhost;Port=5432;Database=PersonalFinanceDb;Username=postgres;Password=postgres"
 ```
 
-**Option 2: Install Locally (Per Project)**
+#### Using Docker
+
 ```bash
-dotnet tool restore
+# Run database migration only
+docker-compose --profile migration up db-migration
 ```
 
-Verify installation:
+#### Check Migration History
+
 ```bash
-dotnet ef --version
+# Connect to database and view applied migrations
+psql -h localhost -U postgres -d PersonalFinanceDb -c "SELECT * FROM schemaversions ORDER BY applied;"
 ```
 
-### Method 1: Using CLI (Traditional Approach)
+### Creating New Migrations
 
-#### Create a new migration
+1. **Create a SQL file** in `src/PersonalFinance.DatabaseMigration/Scripts/`:
+   ```bash
+   touch src/PersonalFinance.DatabaseMigration/Scripts/0002_AddNewFeature.sql
+   ```
+
+2. **Write your migration** (use idempotent SQL):
+   ```sql
+   -- 0002_AddNewFeature.sql
+   CREATE TABLE IF NOT EXISTS "NewTable" (
+       "Id" uuid NOT NULL,
+       "Name" text NOT NULL,
+       CONSTRAINT "PK_NewTable" PRIMARY KEY ("Id")
+   );
+   ```
+
+3. **Run the migration**:
+   ```bash
+   cd src/PersonalFinance.DatabaseMigration
+   dotnet run
+   ```
+
+### Why DBUp?
+
+- ✅ **SQL-First**: Full control over database changes
+- ✅ **Standalone**: Run migrations without the API
+- ✅ **Simple**: Easy to understand and review
+- ✅ **Version Control**: All changes tracked in SQL files
+- ✅ **Team Friendly**: Clear, readable SQL scripts
+
+For more details, see:
+- [DatabaseMigration Project README](src/PersonalFinance.DatabaseMigration/README.md)
+- [DATABASE_MIGRATION_GUIDE.md](DATABASE_MIGRATION_GUIDE.md)
+
+---
+
+### Legacy: Entity Framework Core Migrations
+
+> **Note**: EF Core migrations are being phased out. Use DBUp for new migrations.
+
+For legacy EF Core migration commands, see [DATABASE_MIGRATION_GUIDE.md](DATABASE_MIGRATION_GUIDE.md).
+
+#### Quick Reference (EF Core)
 
 ```bash
+# Apply migrations (legacy)
 cd src/PersonalFinance.API
-dotnet ef migrations add MigrationName --project ../PersonalFinance.Infrastructure
-```
-
-#### Apply migrations
-
-```bash
 dotnet ef database update --project ../PersonalFinance.Infrastructure
 ```
 
-#### Remove last migration
+#### Development API Endpoints (Legacy)
 
+We provide API endpoints for development (these will be removed in future versions):
+
+```http
+GET /api/database/status  # Check database status
+POST /api/database/migrate  # Apply pending migrations
+POST /api/database/create  # Create database
+```
+
+⚠️ **Security Warning**: These endpoints are for development only. Remove or secure before production!
+
+**Example:**
 ```bash
-dotnet ef migrations remove --project ../PersonalFinance.Infrastructure
-```
-
-### Method 2: Using API Endpoints (Quick & Easy for Development)
-
-We provide convenient API endpoints for database management during development:
-
-#### Check Database Status
-```http
-GET /api/database/status
-```
-Returns migration status, pending migrations, and connection info.
-
-#### Apply All Pending Migrations
-```http
-POST /api/database/migrate
-```
-Applies all pending migrations to your database.
-
-#### Create Database
-```http
-POST /api/database/create
-```
-Creates the database if it doesn't exist.
-
-**Example with curl:**
-```bash
-# Check status
 curl http://localhost:5000/api/database/status
-
-# Apply migrations
 curl -X POST http://localhost:5000/api/database/migrate
 ```
 
-**Using Swagger UI:**
-1. Run the API: `dotnet run --project src/PersonalFinance.API`
-2. Open: `http://localhost:5000/swagger`
-3. Navigate to **Database** controller
-4. Try the endpoints
-
-⚠️ **Security Warning**: These endpoints are set to `[AllowAnonymous]` for development. Remove or secure them before production deployment!
+---
 
 ### Detailed Migration Guide
 
-For comprehensive migration instructions including Supabase configuration, see [DATABASE_MIGRATION_GUIDE.md](DATABASE_MIGRATION_GUIDE.md)
+For comprehensive migration instructions, see [DATABASE_MIGRATION_GUIDE.md](DATABASE_MIGRATION_GUIDE.md)
 
 ## 🌐 Future Enhancements
 

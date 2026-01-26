@@ -53,7 +53,7 @@
 ## 🔄 In Progress / Pending
 
 ### Backend
-- [ ] Database migrations (need to run EF Core migrations)
+- [ ] **Database migrations being migrated from EF Core to DBUp** (in progress)
 - [ ] Remaining API controllers:
   - Family Members Controller
   - Provident Fund Controller
@@ -118,11 +118,17 @@
   - Rate limiting configuration
 
 ### AI Features (Pending Full Implementation)
-- [ ] MCP protocol actual integration
+- [ ] MCP protocol actual integration (foundation complete, protocol implementation pending)
 - [ ] Real-time price updates via MCP
 - [ ] Predictive analytics
 - [ ] Portfolio optimization with AI
 - [ ] Automated reporting
+
+### Database Migration System
+- [ ] Replace EF Core migrations with DBUp
+- [ ] Create standalone database migration project
+- [ ] Convert existing EF migrations to SQL scripts
+- [ ] Implement version-controlled SQL migration scripts
 
 ## 📊 Architecture Overview
 
