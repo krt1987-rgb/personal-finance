@@ -29,6 +29,11 @@ An enterprise-grade personal finance management application built with .NET Core
    - Buy/Sell transaction management
    - Profit/Loss calculation
    - Portfolio performance metrics
+   - **NEW: AI-Powered Stock Research Assistant** 🤖
+     - Multi-provider AI support (OpenAI, Anthropic, Google Gemini, Ollama)
+     - Multiple analysis types (Fundamental, Technical, Sentiment, etc.)
+     - Intelligent caching to optimize costs
+     - Interactive stock research with custom queries
    - Live price tracking integration (planned)
 
 5. **Mutual Fund Management**
@@ -164,6 +169,54 @@ The API will be available at:
 - HTTP: `http://localhost:5000`
 - Swagger UI: `https://localhost:5001/swagger`
 
+## 🤖 AI Stock Research Assistant
+
+The application includes a powerful AI-driven stock research assistant that provides intelligent analysis and insights.
+
+### Features
+- **Multi-Provider Support**: OpenAI (GPT-4, GPT-3.5), Anthropic (Claude 3), Google Gemini, and local Ollama models
+- **Multiple Analysis Types**: 
+  - Quick Overview
+  - Fundamental Analysis
+  - Technical Analysis  
+  - Sentiment Analysis
+  - Valuation
+  - Risk Assessment
+  - Comprehensive Analysis
+- **Smart Caching**: Reduces API costs by caching recent analyses
+- **Interactive Research**: Ask custom questions about any stock
+- **One-Click Access**: Research any stock directly from your portfolio
+
+### Quick Start
+
+1. **Configure an AI Provider** (see [AI Configuration Guide](AI_CONFIGURATION_GUIDE.md))
+```bash
+curl -X POST http://localhost:5000/api/aimodelconfigurations \
+  -H "Authorization: Bearer YOUR_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "OpenAI GPT-4",
+    "providerType": 0,
+    "modelType": 1,
+    "apiKey": "your-api-key",
+    "isDefault": true
+  }'
+```
+
+2. **Analyze a Stock**
+```bash
+curl -X POST http://localhost:5000/api/stockanalysis \
+  -H "Authorization: Bearer YOUR_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "symbol": "AAPL",
+    "analysisType": 3,
+    "useCache": true
+  }'
+```
+
+For detailed configuration and usage, see the [AI Configuration Guide](AI_CONFIGURATION_GUIDE.md).
+
 ## 📚 API Documentation
 
 Once the application is running, visit the Swagger UI at `https://localhost:5001/swagger` for interactive API documentation.
@@ -197,6 +250,18 @@ Once the application is running, visit the Swagger UI at `https://localhost:5001
 - `GET /api/database/status` - Check database connection and migration status
 - `POST /api/database/migrate` - Apply all pending migrations
 - `POST /api/database/create` - Create database if not exists
+
+#### AI Stock Research 🤖
+- `GET /api/aimodelconfigurations` - Get all AI configurations
+- `POST /api/aimodelconfigurations` - Create new AI provider configuration
+- `GET /api/aimodelconfigurations/default` - Get default AI configuration
+- `PUT /api/aimodelconfigurations/{id}` - Update AI configuration
+- `DELETE /api/aimodelconfigurations/{id}` - Delete AI configuration
+- `POST /api/stockanalysis` - Create AI-powered stock analysis
+- `GET /api/stockanalysis/{id}` - Get analysis by ID
+- `GET /api/stockanalysis/symbol/{symbol}` - Get all analyses for a symbol
+- `GET /api/stockanalysis/quick-overview/{symbol}` - Get quick AI overview
+- `POST /api/stockanalysis/research` - Interactive AI stock research
 
 ## 🔒 Security
 
@@ -313,9 +378,12 @@ For comprehensive migration instructions including Supabase configuration, see [
 - 🔄 Dashboard with charts
 - 🔄 Live stock price integration
 
-### Phase 3 (Planned)
-- 📋 AI-powered stock evaluation
-- 📋 Stock research assistant
+### Phase 3 (In Progress)
+- ✅ **AI-powered stock research assistant**
+- ✅ **Multi-provider AI configuration**
+- ✅ **Stock analysis with caching**
+- 📋 AI-powered investment recommendations
+- 📋 MCP server integration
 - 📋 Predictive analytics
 - 📋 Automated reporting
 - 📋 Mobile app (React Native)
