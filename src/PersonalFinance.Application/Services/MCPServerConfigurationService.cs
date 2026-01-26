@@ -197,8 +197,9 @@ public class MCPServerConfigurationService : IMCPServerConfigurationService
             }
             else
             {
-                var errorContent = await response.Content.ReadAsStringAsync();
                 var errorMessage = $"HTTP {(int)response.StatusCode}: {response.ReasonPhrase}";
+                _logger.LogWarning("Connection test failed for MCP server {ConfigId}: {StatusCode} {ReasonPhrase}", 
+                    id, (int)response.StatusCode, response.ReasonPhrase);
                 
                 config.ConnectionStatus = MCPConnectionStatus.Error;
                 config.LastErrorMessage = errorMessage;

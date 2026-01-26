@@ -241,30 +241,54 @@ public class MCPDataService : IMCPDataService
 
     private MCPStockPriceResponse CreateMockStockPriceData(string symbol, string currency = "USD")
     {
+        // Use deterministic seed based on symbol to get consistent results
+        var seed = symbol.GetHashCode() + DateTime.UtcNow.Day;
+        int baseValue, priceRange, volumeMin, volumeMax;
+        
         lock (_random)
         {
-            var seed = symbol.GetHashCode() + DateTime.UtcNow.Day;
-            var symbolRandom = new Random(seed);
-            
-            var basePrice = currency == "INR" ? 1000m + symbolRandom.Next(1, 5000) : 100m + symbolRandom.Next(1, 500);
-            var change = (decimal)(symbolRandom.NextDouble() * 10 - 5);
-            
-            return new MCPStockPriceResponse
-            {
-                Symbol = symbol,
-                Price = basePrice,
-                Currency = currency,
-                Timestamp = DateTime.UtcNow,
-                Open = basePrice - (decimal)symbolRandom.NextDouble() * 5,
-                High = basePrice + (decimal)symbolRandom.NextDouble() * 5,
-                Low = basePrice - (decimal)symbolRandom.NextDouble() * 5,
-                PreviousClose = basePrice - change,
-                Volume = symbolRandom.Next(1000000, 50000000),
-                Change = change,
-                ChangePercent = (change / (basePrice - change)) * 100,
-                MarketState = DateTime.UtcNow.Hour >= 9 && DateTime.UtcNow.Hour < 16 ? "REGULAR" : "CLOSED"
-            };
+            // Use the shared random instance within the lock for thread safety
+            var tempRandom = new Random(seed);
+            baseValue = currency == "INR" ? tempRandom.Next(1000, 6000) : tempRandom.Next(100, 600);
+            priceRange = tempRandom.Next(1, 10);
+            volumeMin = tempRandom.Next(1000000, 25000000);
+            volumeMax = tempRandom.Next(25000000, 50000000);
         }
+        
+        var basePrice = (decimal)baseValue;
+        var change = (decimal)(priceRange - 5);
+        
+        return new MCPStockPriceResponse
+        {
+            Symbol = symbol,
+            Price = basePrice,
+            Currency = currency,
+            Timestamp = DateTime.UtcNow,
+            Open = basePrice - (decimal)priceRange * 0.5m,
+            High = basePrice + (decimal)priceRange * 0.5m,
+            Low = basePrice - (decimal)priceRange * 0.5m,
+            PreviousClose = basePrice - change,
+            Volume = volumeMin + (volumeMax - volumeMin) / 2,
+            Change = change,
+            ChangePercent = basePrice > 0 ? (change / basePrice) * 100 : 0,
+            MarketState = GetMarketState(currency)
+        };
+    }
+
+    private static string GetMarketState(string currency)
+    {
+        var utcNow = DateTime.UtcNow;
+        var dayOfWeek = utcNow.DayOfWeek;
+        
+        // Weekend check
+        if (dayOfWeek == DayOfWeek.Saturday || dayOfWeek == DayOfWeek.Sunday)
+        {
+            return "CLOSED";
+        }
+        
+        // Simplified market hours (actual implementation would use proper market calendars)
+        // This is just for mock data - real implementation would query actual market status
+        return utcNow.Hour >= 9 && utcNow.Hour < 16 ? "REGULAR" : "CLOSED";
     }
 
     private async Task<object> FetchFromCustomServerAsync(MCPServerConfiguration config, MCPDataRequestDto request)
@@ -372,14 +396,30 @@ public class MCPDataService : IMCPDataService
 
         try
         {
-            var dataJson = JsonSerializer.Deserialize<JsonElement>(textElement.GetString() ?? "{}");
+            var dataJson = string.IsNullOrEmpty(textElement.GetString()) 
+                ? JsonDocument.Parse("{}").RootElement 
+                : JsonSerializer.Deserialize<JsonElement>(textElement.GetString()!);
             
             if (request.DataType == MCPDataType.RealTimePrice)
             {
+                // Validate that we have a valid price before creating the response
+                if (!dataJson.TryGetProperty("price", out var priceElement))
+                {
+                    _logger.LogWarning("MCP response missing required 'price' field for {Symbol}", request.Symbol);
+                    return null;
+                }
+
+                var price = priceElement.GetDecimal();
+                if (price <= 0)
+                {
+                    _logger.LogWarning("MCP response has invalid price {Price} for {Symbol}", price, request.Symbol);
+                    return null;
+                }
+
                 return new MCPStockPriceResponse
                 {
                     Symbol = request.Symbol,
-                    Price = dataJson.TryGetProperty("price", out var price) ? price.GetDecimal() : 0,
+                    Price = price,
                     Currency = dataJson.TryGetProperty("currency", out var currency) ? currency.GetString() ?? defaultCurrency : defaultCurrency,
                     Timestamp = DateTime.UtcNow,
                     Open = dataJson.TryGetProperty("open", out var open) ? open.GetDecimal() : null,
