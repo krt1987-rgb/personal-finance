@@ -44,6 +44,10 @@ builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IImportService, ImportService>();
 
+// Add Wealth Tracking Services
+builder.Services.AddScoped<INetWorthService, NetWorthService>();
+builder.Services.AddScoped<IWealthSnapshotService, WealthSnapshotService>();
+
 // Add AI Services
 builder.Services.AddHttpClient();
 builder.Services.AddScoped<IAIService, AIService>();
