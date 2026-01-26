@@ -2,6 +2,7 @@ import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, BehaviorSubject } from 'rxjs';
 import { tap } from 'rxjs/operators';
+import { User } from '../../models';
 
 export interface LoginRequest {
   email: string;
@@ -16,11 +17,7 @@ export interface RegisterRequest {
 
 export interface AuthResponse {
   token: string;
-  user: {
-    id: string;
-    name: string;
-    email: string;
-  };
+  user: User;
 }
 
 @Injectable({
@@ -28,7 +25,8 @@ export interface AuthResponse {
 })
 export class AuthService {
   private readonly http = inject(HttpClient);
-  private readonly apiUrl = '/api'; // TODO: Move to environment config
+  // TODO: Move to environment config
+  private readonly apiUrl = '/api';
   private readonly tokenKey = 'auth_token';
   private readonly userKey = 'user_info';
   
@@ -59,9 +57,9 @@ export class AuthService {
     return localStorage.getItem(this.tokenKey);
   }
 
-  getUserInfo(): any {
+  getUserInfo(): User | null {
     const userInfo = localStorage.getItem(this.userKey);
-    return userInfo ? JSON.parse(userInfo) : null;
+    return userInfo ? JSON.parse(userInfo) as User : null;
   }
 
   private setSession(authResult: AuthResponse): void {

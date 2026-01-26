@@ -7,7 +7,8 @@ import { Observable } from 'rxjs';
 })
 export class ApiService {
   private readonly http = inject(HttpClient);
-  private readonly apiUrl = 'http://localhost:5000/api'; // TODO: Move to environment config
+  // TODO: Move to environment configuration
+  private readonly apiUrl = 'http://localhost:5000/api';
 
   get<T>(endpoint: string, params?: any): Observable<T> {
     let httpParams = new HttpParams();

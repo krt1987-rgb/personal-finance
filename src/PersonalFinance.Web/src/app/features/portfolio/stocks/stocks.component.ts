@@ -4,6 +4,7 @@ import { MatCardModule } from '@angular/material/card';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatTableModule } from '@angular/material/table';
+import { Stock } from '../../../shared/models';
 
 @Component({
   selector: 'app-stocks',
@@ -19,19 +20,19 @@ import { MatTableModule } from '@angular/material/table';
 })
 export class StocksComponent {
   displayedColumns: string[] = ['symbol', 'name', 'quantity', 'avgPrice', 'currentPrice', 'value', 'profitLoss', 'actions'];
-  dataSource: any[] = [];
+  dataSource: Stock[] = [];
   
   addStock(): void {
     // TODO: Open dialog to add stock
     console.log('Add stock');
   }
   
-  editStock(stock: any): void {
+  editStock(stock: Stock): void {
     // TODO: Open dialog to edit stock
     console.log('Edit stock', stock);
   }
   
-  deleteStock(stock: any): void {
+  deleteStock(stock: Stock): void {
     // TODO: Implement delete
     console.log('Delete stock', stock);
   }
