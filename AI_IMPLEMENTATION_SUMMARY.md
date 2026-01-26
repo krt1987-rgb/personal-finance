@@ -193,15 +193,16 @@ Successfully implemented a comprehensive AI-powered stock research assistant fea
 ### Short Term (Next Sprint)
 - [ ] Add unit tests for all services
 - [ ] Create UI for AI configuration management
-- [ ] Add analysis history view
-- [ ] Implement batch analysis for portfolios
+- [x] **COMPLETED: Add analysis history view**
+- [x] **COMPLETED: Implement batch analysis for portfolios**
 
 ### Medium Term
-- [ ] MCP server integration for real-time data
-- [ ] Implement confidence score calculation algorithm
-- [ ] Add AI-powered buy/sell recommendations
+- [x] **COMPLETED: MCP server integration foundation (protocol implementation pending)**
+- [x] **COMPLETED: Implement confidence score calculation algorithm**
+- [ ] Add AI-powered buy/sell recommendations based on portfolio context
 - [ ] Create scheduled analysis jobs
 - [ ] Add export functionality (PDF, Excel)
+- [ ] Complete MCP protocol integration with actual providers
 
 ### Long Term
 - [ ] Fine-tune custom models on user preferences
@@ -211,6 +212,32 @@ Successfully implemented a comprehensive AI-powered stock research assistant fea
 - [ ] Advanced portfolio optimization with AI
 - [ ] Predictive analytics for stock movements
 
+## Recently Implemented (January 2026)
+
+### Confidence Score Algorithm ✅
+- Multi-factor scoring system (completeness, detail, structure, consistency)
+- Automated calculation for all analyses
+- Scores range from 0-100
+- Helps users assess analysis reliability
+
+### Batch Analysis ✅
+- Analyze multiple stocks in a single request
+- Individual error handling per symbol
+- Progress tracking and cache optimization
+- Comprehensive result aggregation
+
+### Enhanced Analysis History ✅
+- Advanced filtering (symbol, type, status, date range)
+- Multiple sorting options (created, completed, confidence score)
+- Pagination support for large datasets
+- RESTful API endpoint
+
+### MCP Server Integration Foundation ✅
+- Complete infrastructure for MCP protocol
+- Multi-provider configuration system
+- Connection testing framework
+- Data fetching structure (protocol implementation pending)
+
 ## Metrics & Monitoring
 
 ### Recommended KPIs to Track
@@ -218,6 +245,8 @@ Successfully implemented a comprehensive AI-powered stock research assistant fea
 2. **Cost**: API costs per provider
 3. **Performance**: Average analysis time
 4. **Quality**: Cache hit rate
+5. **Confidence**: Average confidence scores by analysis type
+6. **Batch**: Average batch size and success rate
 5. **Errors**: Failed analysis rate
 6. **Popular**: Most requested analysis types
 7. **Providers**: Provider usage distribution
