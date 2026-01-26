@@ -35,4 +35,10 @@ export class ApiService {
   patch<T>(endpoint: string, body: any): Observable<T> {
     return this.http.patch<T>(`${this.apiUrl}/${endpoint}`, body);
   }
+
+  uploadFile<T>(endpoint: string, file: File): Observable<T> {
+    const formData = new FormData();
+    formData.append('file', file);
+    return this.http.post<T>(`${this.apiUrl}/${endpoint}`, formData);
+  }
 }

@@ -1,0 +1,72 @@
+<h2 mat-dialog-title>{{ data.title }}</h2>
+
+<mat-dialog-content>
+  <div class="import-container">
+    <p>Upload a CSV or Excel file to import data. The file should have the following columns:</p>
+    
+    <div class="format-info" *ngIf="data.moduleType === 'stocks'">
+      <strong>Stock Holdings:</strong> Symbol, CompanyName, Exchange, Quantity, AverageBuyPrice, CurrentPrice, ISIN, Sector
+    </div>
+    
+    <div class="format-info" *ngIf="data.moduleType === 'bankAccounts'">
+      <strong>Bank Accounts:</strong> BankName, AccountNumber, IFSC, AccountType, CurrentBalance, Currency, IsActive
+    </div>
+    
+    <div class="format-info" *ngIf="data.moduleType === 'fixedDeposits'">
+      <strong>Fixed Deposits:</strong> BankAccountNumber, FDNumber, PrincipalAmount, InterestRate, TenureInMonths, StartDate, MaturityDate, MaturityAmount, Status
+    </div>
+    
+    <div class="format-info" *ngIf="data.moduleType === 'mutualFunds'">
+      <strong>Mutual Fund Holdings:</strong> FolioNumber, SchemeName, AMC, ISIN, Category, Units, AverageNAV, CurrentNAV, InvestmentMode
+    </div>
+    
+    <div class="format-info" *ngIf="data.moduleType === 'providentFunds'">
+      <strong>Provident Funds:</strong> AccountNumber, PFType, EmployeeContribution, EmployerContribution, InterestRate, CurrentBalance, LastUpdatedBalance
+    </div>
+    
+    <div class="format-info" *ngIf="data.moduleType === 'familyMembers'">
+      <strong>Family Members:</strong> FirstName, LastName, Relationship, DateOfBirth, Email, PhoneNumber, IsDependent
+    </div>
+
+    <app-file-upload
+      (fileSelected)="onFileSelected($event)"
+      [buttonText]="'Select File'"
+    ></app-file-upload>
+
+    <div *ngIf="isUploading" class="uploading">
+      <mat-spinner diameter="40"></mat-spinner>
+      <p>Importing data...</p>
+    </div>
+
+    <div *ngIf="importResult" class="result">
+      <h3>Import Results</h3>
+      <div class="result-summary">
+        <p><strong>Total Rows:</strong> {{ importResult.totalRows }}</p>
+        <p class="success"><strong>Success:</strong> {{ importResult.successCount }}</p>
+        <p class="failure" *ngIf="importResult.failureCount > 0">
+          <strong>Failed:</strong> {{ importResult.failureCount }}
+        </p>
+      </div>
+
+      <div *ngIf="importResult.errors.length > 0" class="errors">
+        <h4>Errors:</h4>
+        <div *ngFor="let error of importResult.errors" class="error-item">
+          <strong>Row {{ error.rowNumber }}:</strong> {{ error.error }}
+        </div>
+      </div>
+    </div>
+  </div>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button mat-button (click)="onClose()">Close</button>
+  <button
+    mat-raised-button
+    color="primary"
+    (click)="onImport()"
+    [disabled]="!selectedFile || isUploading"
+  >
+    <mat-icon>upload</mat-icon>
+    Import
+  </button>
+</mat-dialog-actions>

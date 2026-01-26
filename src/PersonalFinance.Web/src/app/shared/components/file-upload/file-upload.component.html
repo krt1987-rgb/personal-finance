@@ -1,0 +1,28 @@
+<div class="file-upload-container">
+  <input
+    type="file"
+    id="fileInput"
+    (change)="onFileChange($event)"
+    [accept]="acceptedFormats()"
+    style="display: none;"
+  />
+  
+  <button
+    mat-raised-button
+    color="primary"
+    (click)="triggerFileInput()"
+    [disabled]="isUploading"
+  >
+    <mat-icon>upload_file</mat-icon>
+    {{ buttonText() }}
+  </button>
+  
+  <span *ngIf="selectedFile" class="file-name">
+    {{ selectedFile.name }}
+  </span>
+  
+  <mat-progress-bar
+    *ngIf="isUploading"
+    mode="indeterminate"
+  ></mat-progress-bar>
+</div>
