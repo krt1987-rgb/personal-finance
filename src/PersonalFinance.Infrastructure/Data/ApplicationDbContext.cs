@@ -26,6 +26,7 @@ public class ApplicationDbContext : DbContext
     public DbSet<PasswordResetToken> PasswordResetTokens { get; set; } = null!;
     public DbSet<AIModelConfiguration> AIModelConfigurations { get; set; } = null!;
     public DbSet<StockAnalysis> StockAnalyses { get; set; } = null!;
+    public DbSet<MCPServerConfiguration> MCPServerConfigurations { get; set; } = null!;
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -252,6 +253,23 @@ public class ApplicationDbContext : DbContext
                 .WithMany(a => a.StockAnalyses)
                 .HasForeignKey(e => e.AIModelConfigurationId)
                 .OnDelete(DeleteBehavior.SetNull);
+                
+            entity.HasQueryFilter(e => !e.IsDeleted);
+        });
+
+        // Configure MCPServerConfiguration entity
+        modelBuilder.Entity<MCPServerConfiguration>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Name).IsRequired().HasMaxLength(200);
+            entity.Property(e => e.ApiEndpoint).IsRequired().HasMaxLength(500);
+            entity.Property(e => e.ApiKey).HasMaxLength(500);
+            entity.Property(e => e.SupportedDataTypes).HasMaxLength(200);
+            entity.Property(e => e.LastErrorMessage).HasMaxLength(1000);
+            entity.HasOne(e => e.User)
+                .WithMany()
+                .HasForeignKey(e => e.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
                 
             entity.HasQueryFilter(e => !e.IsDeleted);
         });

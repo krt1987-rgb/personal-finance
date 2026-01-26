@@ -50,6 +50,10 @@ builder.Services.AddScoped<IAIService, AIService>();
 builder.Services.AddScoped<IAIModelConfigurationService, AIModelConfigurationService>();
 builder.Services.AddScoped<IStockAnalysisService, StockAnalysisService>();
 
+// Add MCP Services
+builder.Services.AddScoped<IMCPServerConfigurationService, MCPServerConfigurationService>();
+builder.Services.AddScoped<IMCPDataService, MCPDataService>();
+
 // Configure CORS
 builder.Services.AddCors(options =>
 {
