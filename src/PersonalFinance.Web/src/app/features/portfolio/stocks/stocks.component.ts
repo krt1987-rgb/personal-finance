@@ -11,6 +11,7 @@ import { Stock } from '../../../shared/models';
 import { StockDialogComponent } from './stock-dialog/stock-dialog.component';
 import { AIResearchDialogComponent } from './ai-research-dialog/ai-research-dialog.component';
 import { ConfirmDialogComponent } from '../../../shared/components/confirm-dialog/confirm-dialog.component';
+import { ImportDialogComponent } from '../../../shared/components/import-dialog/import-dialog.component';
 
 @Component({
   selector: 'app-stocks',
@@ -97,6 +98,20 @@ export class StocksComponent {
       }
     });
   }
+  
+  importStocks(): void {
+    const dialogRef = this.dialog.open(ImportDialogComponent, {
+      width: '600px',
+      data: {
+        moduleType: 'stocks',
+        title: 'Import Stock Holdings'
+      }
+    });
+
+    dialogRef.afterClosed().subscribe(result => {
+      if (result && result.successCount > 0) {
+        // Reload data after successful import
+        this.snackBar.open('Import completed. Refresh the page to see imported data.', 'Close', { duration: 5000 });
 
   aiResearch(stock: Stock): void {
     this.dialog.open(AIResearchDialogComponent, {

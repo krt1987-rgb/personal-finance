@@ -12,13 +12,16 @@ namespace PersonalFinance.API.Controllers;
 public class FixedDepositsController : ControllerBase
 {
     private readonly IFixedDepositService _fixedDepositService;
+    private readonly IImportService _importService;
     private readonly ILogger<FixedDepositsController> _logger;
 
     public FixedDepositsController(
         IFixedDepositService fixedDepositService,
+        IImportService importService,
         ILogger<FixedDepositsController> logger)
     {
         _fixedDepositService = fixedDepositService;
+        _importService = importService;
         _logger = logger;
     }
 
@@ -120,6 +123,32 @@ public class FixedDepositsController : ControllerBase
         {
             _logger.LogError(ex, "Error retrieving fixed deposit summary");
             return StatusCode(500, "An error occurred while retrieving the summary");
+        }
+    }
+
+    /// <summary>
+    /// Import fixed deposits from CSV or Excel file
+    /// </summary>
+    [HttpPost("import")]
+    public async Task<ActionResult<ImportResultDto>> ImportFixedDeposits(IFormFile file)
+    {
+        try
+        {
+            if (file == null || file.Length == 0)
+            {
+                return BadRequest("No file uploaded");
+            }
+
+            var userId = User.GetUserId();
+            using var stream = file.OpenReadStream();
+            var result = await _importService.ImportFixedDepositsAsync(stream, file.FileName, userId);
+            
+            return Ok(result);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error importing fixed deposits");
+            return StatusCode(500, "An error occurred while importing fixed deposits");
         }
     }
 }

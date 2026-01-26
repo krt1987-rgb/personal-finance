@@ -12,13 +12,16 @@ namespace PersonalFinance.API.Controllers;
 public class MutualFundHoldingsController : ControllerBase
 {
     private readonly IMutualFundService _mutualFundService;
+    private readonly IImportService _importService;
     private readonly ILogger<MutualFundHoldingsController> _logger;
 
     public MutualFundHoldingsController(
         IMutualFundService mutualFundService,
+        IImportService importService,
         ILogger<MutualFundHoldingsController> logger)
     {
         _mutualFundService = mutualFundService;
+        _importService = importService;
         _logger = logger;
     }
 
@@ -120,6 +123,32 @@ public class MutualFundHoldingsController : ControllerBase
         {
             _logger.LogError(ex, "Error retrieving mutual fund portfolio summary");
             return StatusCode(500, "An error occurred while retrieving portfolio summary");
+        }
+    }
+
+    /// <summary>
+    /// Import mutual fund holdings from CSV or Excel file
+    /// </summary>
+    [HttpPost("import")]
+    public async Task<ActionResult<ImportResultDto>> ImportMutualFundHoldings(IFormFile file)
+    {
+        try
+        {
+            if (file == null || file.Length == 0)
+            {
+                return BadRequest("No file uploaded");
+            }
+
+            var userId = User.GetUserId();
+            using var stream = file.OpenReadStream();
+            var result = await _importService.ImportMutualFundHoldingsAsync(stream, file.FileName, userId);
+            
+            return Ok(result);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error importing mutual fund holdings");
+            return StatusCode(500, "An error occurred while importing mutual fund holdings");
         }
     }
 }

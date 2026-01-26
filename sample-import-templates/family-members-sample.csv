@@ -1,0 +1,5 @@
+FirstName,LastName,Relationship,DateOfBirth,Email,PhoneNumber,IsDependent
+Priya,Kumar,Spouse,1990-05-15,priya.kumar@example.com,9876543210,false
+Rahul,Kumar,Child,2015-08-20,,,true
+Anita,Sharma,Parent,1960-03-10,anita.sharma@example.com,9876543211,true
+Rajesh,Sharma,Parent,1958-11-25,rajesh.sharma@example.com,9876543212,false

@@ -42,6 +42,7 @@ builder.Services.AddScoped<IFixedDepositService, FixedDepositService>();
 builder.Services.AddScoped<IProvidentFundService, ProvidentFundService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IUserService, UserService>();
+builder.Services.AddScoped<IImportService, ImportService>();
 
 // Add AI Services
 builder.Services.AddHttpClient();

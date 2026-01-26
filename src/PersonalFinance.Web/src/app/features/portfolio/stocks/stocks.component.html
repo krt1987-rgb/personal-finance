@@ -1,10 +1,16 @@
 <div class="stocks-page">
   <div class="page-header">
     <h1>Stock Holdings</h1>
-    <button mat-raised-button color="primary" (click)="addStock()">
-      <mat-icon>add</mat-icon>
-      Add Stock
-    </button>
+    <div class="button-group">
+      <button mat-raised-button color="accent" (click)="importStocks()">
+        <mat-icon>upload_file</mat-icon>
+        Import
+      </button>
+      <button mat-raised-button color="primary" (click)="addStock()">
+        <mat-icon>add</mat-icon>
+        Add Stock
+      </button>
+    </div>
   </div>
   
   <mat-card>
