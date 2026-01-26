@@ -101,8 +101,13 @@ public class StockAnalysisService : IStockAnalysisService
             analysis.Recommendation = structuredResult.Recommendation;
             analysis.Status = AnalysisStatus.Completed;
             analysis.CompletedAt = DateTime.UtcNow;
-            // TODO: Implement proper confidence scoring based on analysis quality metrics
-            analysis.ConfidenceScore = null; // Remove hardcoded score until proper implementation
+            // Confidence scoring needs proper implementation based on:
+            // - Response completeness
+            // - Sentiment analysis consistency
+            // - Data source reliability
+            // - Model performance metrics
+            // For now, leaving as null until metrics are defined
+            analysis.ConfidenceScore = null;
             
             // Set cache expiration based on analysis type
             analysis.CachedUntil = DateTime.UtcNow.AddHours(GetCacheDurationHours(request.AnalysisType));

@@ -1,5 +1,5 @@
 import { Pipe, PipeTransform } from '@angular/core';
-import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
+import { DomSanitizer, SafeHtml, SecurityContext } from '@angular/platform-browser';
 
 @Pipe({
   name: 'safe',
@@ -10,8 +10,8 @@ export class SafePipe implements PipeTransform {
 
   transform(value: string, type: string): SafeHtml | string {
     if (type === 'html') {
-      // Use sanitize instead of bypass to maintain XSS protection
-      const sanitized = this.sanitizer.sanitize(1, value); // SecurityContext.HTML = 1
+      // Use sanitize with SecurityContext.HTML to maintain XSS protection
+      const sanitized = this.sanitizer.sanitize(SecurityContext.HTML, value);
       return sanitized || '';
     }
     return value;
