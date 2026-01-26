@@ -38,9 +38,9 @@ export class StockDialogComponent {
     this.stockForm = this.fb.group({
       symbol: [data.stock?.symbol || '', [Validators.required]],
       name: [data.stock?.name || '', [Validators.required]],
-      quantity: [data.stock?.quantity || 0, [Validators.required, Validators.min(0)]],
-      avgPrice: [data.stock?.avgPrice || 0, [Validators.required, Validators.min(0)]],
-      currentPrice: [data.stock?.currentPrice || 0, [Validators.required, Validators.min(0)]]
+      quantity: [data.stock?.quantity || 0, [Validators.required, Validators.min(1)]],
+      avgPrice: [data.stock?.avgPrice || 0, [Validators.required, Validators.min(0.01)]],
+      currentPrice: [data.stock?.currentPrice || 0, [Validators.required, Validators.min(0.01)]]
     });
   }
 

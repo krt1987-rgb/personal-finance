@@ -67,8 +67,7 @@ export class RegisterComponent {
         next: (response) => {
           this.isLoading = false;
           this.snackBar.open('Registration successful! Redirecting to dashboard...', 'Close', { duration: 3000 });
-          // Navigate to dashboard after successful registration (user is already logged in)
-          setTimeout(() => this.router.navigate(['/dashboard']), 1000);
+          this.router.navigate(['/dashboard']);
         },
         error: (error) => {
           this.isLoading = false;

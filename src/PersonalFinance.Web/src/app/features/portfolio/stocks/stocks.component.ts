@@ -42,7 +42,7 @@ export class StocksComponent {
         // Generate a temporary ID (in a real app, this would come from the API)
         const newStock: Stock = {
           ...result,
-          id: `stock-${Date.now()}`
+          id: crypto.randomUUID()
         };
         
         this.dataSource = [...this.dataSource, newStock];

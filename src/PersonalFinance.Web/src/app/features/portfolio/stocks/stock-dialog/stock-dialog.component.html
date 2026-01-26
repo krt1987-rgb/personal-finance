@@ -25,7 +25,7 @@
         Quantity is required
       </mat-error>
       <mat-error *ngIf="stockForm.get('quantity')?.hasError('min')">
-        Quantity must be positive
+        Quantity must be at least 1
       </mat-error>
     </mat-form-field>
 
@@ -36,7 +36,7 @@
         Average price is required
       </mat-error>
       <mat-error *ngIf="stockForm.get('avgPrice')?.hasError('min')">
-        Price must be positive
+        Price must be greater than 0
       </mat-error>
     </mat-form-field>
 
@@ -47,7 +47,7 @@
         Current price is required
       </mat-error>
       <mat-error *ngIf="stockForm.get('currentPrice')?.hasError('min')">
-        Price must be positive
+        Price must be greater than 0
       </mat-error>
     </mat-form-field>
   </mat-dialog-content>
