@@ -1,9 +1,98 @@
 # Database Migration Guide
 
-## Prerequisites
-You need to install the Entity Framework Core CLI tools.
+## Migration System
 
-### Option 1: Install Globally (Recommended)
+This project uses **DBUp** for database migrations, providing a SQL-first approach with version-controlled migration scripts.
+
+> **Note**: The project is transitioning from Entity Framework Core migrations to DBUp. EF Core is still available but DBUp is the recommended approach for new migrations.
+
+## Quick Start with DBUp (Recommended)
+
+### 1. Run Database Migrations
+
+```bash
+# Navigate to the migration project
+cd src/PersonalFinance.DatabaseMigration
+
+# Run migrations (uses default connection string or environment variable)
+dotnet run
+
+# Or with custom connection string
+dotnet run "Host=localhost;Port=5432;Database=PersonalFinanceDb;Username=postgres;Password=postgres"
+```
+
+### 2. Using Docker
+
+```bash
+# Run just the database migration
+docker-compose --profile migration up db-migration
+
+# Or run all services (which will run migrations first)
+docker-compose up
+```
+
+### 3. Check Migration Status
+
+```bash
+# Connect to database and view migration history
+psql -h localhost -U postgres -d PersonalFinanceDb -c "SELECT * FROM schemaversions ORDER BY applied;"
+```
+
+## DBUp Migration System
+
+### Why DBUp?
+
+- ✅ **SQL-First**: Write SQL directly for full control
+- ✅ **Standalone**: Run migrations without starting the API
+- ✅ **Simple**: Easy to understand and debug
+- ✅ **Version Control**: All changes in SQL files
+- ✅ **Team Friendly**: SQL scripts are easy to review
+
+### Creating New Migrations
+
+1. **Create a new SQL file** in `src/PersonalFinance.DatabaseMigration/Scripts/`:
+   ```bash
+   cd src/PersonalFinance.DatabaseMigration/Scripts
+   touch 0002_AddNewFeature.sql
+   ```
+
+2. **Write your SQL migration** (use idempotent statements):
+   ```sql
+   -- 0002_AddNewFeature.sql
+   -- Description: Add notifications table
+   
+   CREATE TABLE IF NOT EXISTS "Notifications" (
+       "Id" uuid NOT NULL,
+       "UserId" uuid NOT NULL,
+       "Message" text NOT NULL,
+       "IsRead" boolean NOT NULL DEFAULT false,
+       "CreatedAt" timestamp with time zone NOT NULL,
+       CONSTRAINT "PK_Notifications" PRIMARY KEY ("Id")
+   );
+   ```
+
+3. **Run the migration**:
+   ```bash
+   cd src/PersonalFinance.DatabaseMigration
+   dotnet run
+   ```
+
+### Migration Scripts
+
+All migration scripts are in `src/PersonalFinance.DatabaseMigration/Scripts/`:
+- `0001_AllMigrations.sql` - Complete initial schema (all existing EF migrations combined)
+- `0002_YourFeature.sql` - Your next migration
+- etc.
+
+Scripts are executed in **alphabetical order**. See [DatabaseMigration README](../src/PersonalFinance.DatabaseMigration/README.md) for details.
+
+---
+
+## Alternative: Entity Framework Core (Legacy)
+
+> **Note**: This method is being phased out in favor of DBUp. Use DBUp for new migrations.
+
+### Prerequisites: Install EF Core Tools
 ```bash
 dotnet tool install --global dotnet-ef --version 10.0.2
 ```
