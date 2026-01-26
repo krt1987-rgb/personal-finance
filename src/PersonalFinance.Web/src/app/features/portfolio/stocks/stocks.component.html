@@ -63,6 +63,9 @@
           <ng-container matColumnDef="actions">
             <th mat-header-cell *matHeaderCellDef>Actions</th>
             <td mat-cell *matCellDef="let element">
+              <button mat-icon-button (click)="aiResearch(element)" matTooltip="AI Research">
+                <mat-icon>psychology</mat-icon>
+              </button>
               <button mat-icon-button (click)="editStock(element)">
                 <mat-icon>edit</mat-icon>
               </button>

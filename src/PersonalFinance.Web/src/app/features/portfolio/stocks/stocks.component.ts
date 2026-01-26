@@ -6,8 +6,10 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatTableModule } from '@angular/material/table';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
+import { MatTooltipModule } from '@angular/material/tooltip';
 import { Stock } from '../../../shared/models';
 import { StockDialogComponent } from './stock-dialog/stock-dialog.component';
+import { AIResearchDialogComponent } from './ai-research-dialog/ai-research-dialog.component';
 import { ConfirmDialogComponent } from '../../../shared/components/confirm-dialog/confirm-dialog.component';
 import { ImportDialogComponent } from '../../../shared/components/import-dialog/import-dialog.component';
 
@@ -20,7 +22,8 @@ import { ImportDialogComponent } from '../../../shared/components/import-dialog/
     MatIconModule,
     MatTableModule,
     MatDialogModule,
-    MatSnackBarModule
+    MatSnackBarModule,
+    MatTooltipModule
   ],
   templateUrl: './stocks.component.html',
   styleUrl: './stocks.component.scss'
@@ -109,6 +112,14 @@ export class StocksComponent {
       if (result && result.successCount > 0) {
         // Reload data after successful import
         this.snackBar.open('Import completed. Refresh the page to see imported data.', 'Close', { duration: 5000 });
+
+  aiResearch(stock: Stock): void {
+    this.dialog.open(AIResearchDialogComponent, {
+      width: '800px',
+      maxHeight: '90vh',
+      data: {
+        symbol: stock.symbol,
+        companyName: stock.name
       }
     });
   }
