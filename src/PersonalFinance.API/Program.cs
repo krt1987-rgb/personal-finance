@@ -43,6 +43,12 @@ builder.Services.AddScoped<IProvidentFundService, ProvidentFundService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IUserService, UserService>();
 
+// Add AI Services
+builder.Services.AddHttpClient();
+builder.Services.AddScoped<IAIService, AIService>();
+builder.Services.AddScoped<IAIModelConfigurationService, AIModelConfigurationService>();
+builder.Services.AddScoped<IStockAnalysisService, StockAnalysisService>();
+
 // Configure CORS
 builder.Services.AddCors(options =>
 {

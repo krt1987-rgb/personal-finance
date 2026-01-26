@@ -6,8 +6,10 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatTableModule } from '@angular/material/table';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
+import { MatTooltipModule } from '@angular/material/tooltip';
 import { Stock } from '../../../shared/models';
 import { StockDialogComponent } from './stock-dialog/stock-dialog.component';
+import { AIResearchDialogComponent } from './ai-research-dialog/ai-research-dialog.component';
 import { ConfirmDialogComponent } from '../../../shared/components/confirm-dialog/confirm-dialog.component';
 
 @Component({
@@ -19,7 +21,8 @@ import { ConfirmDialogComponent } from '../../../shared/components/confirm-dialo
     MatIconModule,
     MatTableModule,
     MatDialogModule,
-    MatSnackBarModule
+    MatSnackBarModule,
+    MatTooltipModule
   ],
   templateUrl: './stocks.component.html',
   styleUrl: './stocks.component.scss'
@@ -91,6 +94,17 @@ export class StocksComponent {
         
         // TODO: Call API service to delete the stock
         console.log('Delete stock via API:', stock.id);
+      }
+    });
+  }
+
+  aiResearch(stock: Stock): void {
+    this.dialog.open(AIResearchDialogComponent, {
+      width: '800px',
+      maxHeight: '90vh',
+      data: {
+        symbol: stock.symbol,
+        companyName: stock.name
       }
     });
   }

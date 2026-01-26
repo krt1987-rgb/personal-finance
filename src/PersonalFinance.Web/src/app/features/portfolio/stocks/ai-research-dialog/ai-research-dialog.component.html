@@ -1,0 +1,101 @@
+<div class="ai-research-dialog">
+  <h2 mat-dialog-title>AI Stock Research: {{ data.symbol }}</h2>
+  
+  <mat-dialog-content>
+    <div class="company-info">
+      <h3>{{ data.companyName }}</h3>
+    </div>
+
+    <mat-form-field appearance="outline" class="full-width">
+      <mat-label>Analysis Type</mat-label>
+      <mat-select [(ngModel)]="selectedAnalysisType">
+        @for (type of analysisTypes; track type.value) {
+          <mat-option [value]="type.value">{{ type.label }}</mat-option>
+        }
+      </mat-select>
+    </mat-form-field>
+
+    @if (!loading && !analysis && !error) {
+      <div class="analyze-prompt">
+        <p>Select an analysis type and click "Analyze" to get AI-powered insights about this stock.</p>
+      </div>
+    }
+
+    @if (loading) {
+      <div class="loading-container">
+        <mat-spinner diameter="50"></mat-spinner>
+        <p>AI is analyzing {{ data.symbol }}...</p>
+      </div>
+    }
+
+    @if (error) {
+      <mat-card class="error-card">
+        <mat-card-content>
+          <p class="error-message">{{ error }}</p>
+        </mat-card-content>
+      </mat-card>
+    }
+
+    @if (analysis && !loading) {
+      <div class="analysis-result">
+        <mat-card>
+          <mat-card-header>
+            <mat-card-title>Analysis Result</mat-card-title>
+            <mat-card-subtitle>
+              @if (analysis.isCached) {
+                <mat-chip [color]="getStatusColor(analysis.status)">Cached Result</mat-chip>
+              }
+              Generated: {{ analysis.createdAt | date:'short' }}
+            </mat-card-subtitle>
+          </mat-card-header>
+          <mat-card-content>
+            @if (analysis.summary) {
+              <div class="section">
+                <h4>Summary</h4>
+                <p>{{ analysis.summary }}</p>
+              </div>
+            }
+
+            @if (analysis.keyInsights) {
+              <div class="section">
+                <h4>Key Insights</h4>
+                <div [innerHTML]="analysis.keyInsights | safe:'html'"></div>
+              </div>
+            }
+
+            @if (analysis.risks) {
+              <div class="section risks">
+                <h4>Risks</h4>
+                <div [innerHTML]="analysis.risks | safe:'html'"></div>
+              </div>
+            }
+
+            @if (analysis.recommendation) {
+              <div class="section recommendation">
+                <h4>Recommendation</h4>
+                <div [innerHTML]="analysis.recommendation | safe:'html'"></div>
+              </div>
+            }
+
+            @if (analysis.analysisResult && !analysis.summary) {
+              <div class="section">
+                <h4>Full Analysis</h4>
+                <div class="full-analysis">{{ analysis.analysisResult }}</div>
+              </div>
+            }
+          </mat-card-content>
+        </mat-card>
+      </div>
+    }
+  </mat-dialog-content>
+
+  <mat-dialog-actions align="end">
+    <button mat-button (click)="close()">Close</button>
+    <button mat-raised-button color="primary" (click)="analyzeStock()" [disabled]="loading">
+      @if (loading) {
+        <mat-spinner diameter="20" style="display: inline-block; margin-right: 8px;"></mat-spinner>
+      }
+      {{ loading ? 'Analyzing...' : analysis ? 'Re-analyze' : 'Analyze' }}
+    </button>
+  </mat-dialog-actions>
+</div>
