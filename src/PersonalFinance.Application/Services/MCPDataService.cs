@@ -18,6 +18,7 @@ public class MCPDataService : IMCPDataService
     private readonly IRepository<MCPServerConfiguration> _configRepository;
     private readonly IHttpClientFactory _httpClientFactory;
     private readonly ILogger<MCPDataService> _logger;
+    private static readonly Random _random = new();
 
     public MCPDataService(
         IRepository<MCPServerConfiguration> configRepository,
@@ -132,376 +133,179 @@ public class MCPDataService : IMCPDataService
 
     private async Task<object> FetchFromYahooFinanceAsync(MCPServerConfiguration config, MCPDataRequestDto request)
     {
-        var httpClient = _httpClientFactory.CreateClient();
-        
-        try
+        var arguments = new
         {
-            // Build MCP request to Yahoo Finance MCP server
-            var mcpRequest = new
-            {
-                method = "tools/call",
-                @params = new
-                {
-                    name = "get_stock_price",
-                    arguments = new
-                    {
-                        symbol = request.Symbol,
-                        dataType = request.DataType.ToString()
-                    }
-                }
-            };
+            symbol = request.Symbol,
+            dataType = request.DataType.ToString()
+        };
 
-            var requestMessage = new HttpRequestMessage(HttpMethod.Post, config.ApiEndpoint)
-            {
-                Content = new StringContent(JsonSerializer.Serialize(mcpRequest), Encoding.UTF8, "application/json")
-            };
-
-            if (!string.IsNullOrEmpty(config.ApiKey))
-            {
-                requestMessage.Headers.Add("Authorization", $"Bearer {config.ApiKey}");
-            }
-
-            var response = await httpClient.SendAsync(requestMessage);
-            
-            if (!response.IsSuccessStatusCode)
-            {
-                var errorContent = await response.Content.ReadAsStringAsync();
-                _logger.LogWarning("Yahoo Finance MCP request failed: {StatusCode} - {Error}", 
-                    response.StatusCode, errorContent);
-                
-                // Return mock data as fallback
-                return CreateMockStockPriceData(request.Symbol);
-            }
-
-            var responseContent = await response.Content.ReadAsStringAsync();
-            var mcpResponse = JsonSerializer.Deserialize<JsonElement>(responseContent);
-            
-            // Parse MCP response
-            if (mcpResponse.TryGetProperty("content", out var content))
-            {
-                return ParseYahooFinanceResponse(content, request);
-            }
-
-            // If we can't parse the response, return mock data
+        var (success, response) = await SendMCPRequestAsync(config, "get_stock_price", arguments);
+        
+        if (!success || !response.HasValue)
+        {
             return CreateMockStockPriceData(request.Symbol);
         }
-        catch (Exception ex)
-        {
-            _logger.LogWarning(ex, "Failed to fetch from Yahoo Finance MCP, returning mock data for {Symbol}", request.Symbol);
-            return CreateMockStockPriceData(request.Symbol);
-        }
-    }
 
-    private object ParseYahooFinanceResponse(JsonElement content, MCPDataRequestDto request)
-    {
-        // Try to parse the content as text and then deserialize
-        if (content.ValueKind == JsonValueKind.Array && content.GetArrayLength() > 0)
+        if (response.Value.TryGetProperty("content", out var content))
         {
-            var firstItem = content[0];
-            if (firstItem.TryGetProperty("text", out var textElement))
+            var stockPrice = TryParseStockPriceResponse(content, request);
+            if (stockPrice != null)
             {
-                try
-                {
-                    var dataJson = JsonSerializer.Deserialize<JsonElement>(textElement.GetString() ?? "{}");
-                    
-                    if (request.DataType == MCPDataType.RealTimePrice)
-                    {
-                        return new MCPStockPriceResponse
-                        {
-                            Symbol = request.Symbol,
-                            Price = dataJson.TryGetProperty("price", out var price) ? price.GetDecimal() : 0,
-                            Currency = dataJson.TryGetProperty("currency", out var currency) ? currency.GetString() ?? "USD" : "USD",
-                            Timestamp = DateTime.UtcNow,
-                            Open = dataJson.TryGetProperty("open", out var open) ? open.GetDecimal() : null,
-                            High = dataJson.TryGetProperty("high", out var high) ? high.GetDecimal() : null,
-                            Low = dataJson.TryGetProperty("low", out var low) ? low.GetDecimal() : null,
-                            PreviousClose = dataJson.TryGetProperty("previousClose", out var prev) ? prev.GetDecimal() : null,
-                            Volume = dataJson.TryGetProperty("volume", out var vol) ? vol.GetInt64() : null,
-                            Change = dataJson.TryGetProperty("change", out var change) ? change.GetDecimal() : null,
-                            ChangePercent = dataJson.TryGetProperty("changePercent", out var changePct) ? changePct.GetDecimal() : null,
-                            MarketState = dataJson.TryGetProperty("marketState", out var state) ? state.GetString() : null
-                        };
-                    }
-                }
-                catch (Exception ex)
-                {
-                    _logger.LogWarning(ex, "Failed to parse Yahoo Finance response");
-                }
+                return stockPrice;
             }
         }
-        
+
         return CreateMockStockPriceData(request.Symbol);
     }
 
     private async Task<object> FetchFromAlphaVantageAsync(MCPServerConfiguration config, MCPDataRequestDto request)
     {
-        var httpClient = _httpClientFactory.CreateClient();
-        
-        try
+        var arguments = new
         {
-            // Build MCP request to Alpha Vantage MCP server
-            var mcpRequest = new
-            {
-                method = "tools/call",
-                @params = new
-                {
-                    name = "get_quote",
-                    arguments = new
-                    {
-                        symbol = request.Symbol,
-                        dataType = request.DataType.ToString()
-                    }
-                }
-            };
+            symbol = request.Symbol,
+            dataType = request.DataType.ToString()
+        };
 
-            var requestMessage = new HttpRequestMessage(HttpMethod.Post, config.ApiEndpoint)
-            {
-                Content = new StringContent(JsonSerializer.Serialize(mcpRequest), Encoding.UTF8, "application/json")
-            };
-
-            if (!string.IsNullOrEmpty(config.ApiKey))
-            {
-                requestMessage.Headers.Add("Authorization", $"Bearer {config.ApiKey}");
-            }
-
-            var response = await httpClient.SendAsync(requestMessage);
-            
-            if (!response.IsSuccessStatusCode)
-            {
-                var errorContent = await response.Content.ReadAsStringAsync();
-                _logger.LogWarning("Alpha Vantage MCP request failed: {StatusCode} - {Error}", 
-                    response.StatusCode, errorContent);
-                
-                return CreateMockStockPriceData(request.Symbol);
-            }
-
-            var responseContent = await response.Content.ReadAsStringAsync();
-            var mcpResponse = JsonSerializer.Deserialize<JsonElement>(responseContent);
-            
-            if (mcpResponse.TryGetProperty("content", out var content))
-            {
-                return ParseAlphaVantageResponse(content, request);
-            }
-
+        var (success, response) = await SendMCPRequestAsync(config, "get_quote", arguments);
+        
+        if (!success || !response.HasValue)
+        {
             return CreateMockStockPriceData(request.Symbol);
         }
-        catch (Exception ex)
-        {
-            _logger.LogWarning(ex, "Failed to fetch from Alpha Vantage MCP, returning mock data for {Symbol}", request.Symbol);
-            return CreateMockStockPriceData(request.Symbol);
-        }
-    }
 
-    private object ParseAlphaVantageResponse(JsonElement content, MCPDataRequestDto request)
-    {
-        if (content.ValueKind == JsonValueKind.Array && content.GetArrayLength() > 0)
+        if (response.Value.TryGetProperty("content", out var content))
         {
-            var firstItem = content[0];
-            if (firstItem.TryGetProperty("text", out var textElement))
+            var stockPrice = TryParseStockPriceResponse(content, request);
+            if (stockPrice != null)
             {
-                try
-                {
-                    var dataJson = JsonSerializer.Deserialize<JsonElement>(textElement.GetString() ?? "{}");
-                    
-                    if (request.DataType == MCPDataType.RealTimePrice)
-                    {
-                        return new MCPStockPriceResponse
-                        {
-                            Symbol = request.Symbol,
-                            Price = dataJson.TryGetProperty("price", out var price) ? price.GetDecimal() : 0,
-                            Currency = "USD",
-                            Timestamp = DateTime.UtcNow,
-                            Open = dataJson.TryGetProperty("open", out var open) ? open.GetDecimal() : null,
-                            High = dataJson.TryGetProperty("high", out var high) ? high.GetDecimal() : null,
-                            Low = dataJson.TryGetProperty("low", out var low) ? low.GetDecimal() : null,
-                            PreviousClose = dataJson.TryGetProperty("previousClose", out var prev) ? prev.GetDecimal() : null,
-                            Volume = dataJson.TryGetProperty("volume", out var vol) ? vol.GetInt64() : null
-                        };
-                    }
-                }
-                catch (Exception ex)
-                {
-                    _logger.LogWarning(ex, "Failed to parse Alpha Vantage response");
-                }
+                return stockPrice;
             }
         }
-        
+
         return CreateMockStockPriceData(request.Symbol);
     }
 
     private async Task<object> FetchFromNSEIndiaAsync(MCPServerConfiguration config, MCPDataRequestDto request)
     {
-        var httpClient = _httpClientFactory.CreateClient();
+        var arguments = new
+        {
+            symbol = request.Symbol,
+            dataType = request.DataType.ToString()
+        };
+
+        var (success, response) = await SendMCPRequestAsync(config, "get_nse_quote", arguments);
         
-        try
+        if (!success || !response.HasValue)
         {
-            var mcpRequest = new
-            {
-                method = "tools/call",
-                @params = new
-                {
-                    name = "get_nse_quote",
-                    arguments = new
-                    {
-                        symbol = request.Symbol,
-                        dataType = request.DataType.ToString()
-                    }
-                }
-            };
-
-            var requestMessage = new HttpRequestMessage(HttpMethod.Post, config.ApiEndpoint)
-            {
-                Content = new StringContent(JsonSerializer.Serialize(mcpRequest), Encoding.UTF8, "application/json")
-            };
-
-            if (!string.IsNullOrEmpty(config.ApiKey))
-            {
-                requestMessage.Headers.Add("Authorization", $"Bearer {config.ApiKey}");
-            }
-
-            var response = await httpClient.SendAsync(requestMessage);
-            
-            if (!response.IsSuccessStatusCode)
-            {
-                _logger.LogWarning("NSE India MCP request failed: {StatusCode}", response.StatusCode);
-                return CreateMockStockPriceData(request.Symbol, "INR");
-            }
-
-            var responseContent = await response.Content.ReadAsStringAsync();
-            var mcpResponse = JsonSerializer.Deserialize<JsonElement>(responseContent);
-            
-            if (mcpResponse.TryGetProperty("content", out var content))
-            {
-                return ParseIndianMarketResponse(content, request, "INR");
-            }
-
             return CreateMockStockPriceData(request.Symbol, "INR");
         }
-        catch (Exception ex)
+
+        if (response.Value.TryGetProperty("content", out var content))
         {
-            _logger.LogWarning(ex, "Failed to fetch from NSE India MCP, returning mock data for {Symbol}", request.Symbol);
-            return CreateMockStockPriceData(request.Symbol, "INR");
+            var stockPrice = TryParseStockPriceResponse(content, request, "INR");
+            if (stockPrice != null)
+            {
+                return stockPrice;
+            }
         }
+
+        return CreateMockStockPriceData(request.Symbol, "INR");
     }
 
     private async Task<object> FetchFromBSEIndiaAsync(MCPServerConfiguration config, MCPDataRequestDto request)
     {
-        var httpClient = _httpClientFactory.CreateClient();
-        
-        try
+        var arguments = new
         {
-            var mcpRequest = new
-            {
-                method = "tools/call",
-                @params = new
-                {
-                    name = "get_bse_quote",
-                    arguments = new
-                    {
-                        symbol = request.Symbol,
-                        dataType = request.DataType.ToString()
-                    }
-                }
-            };
+            symbol = request.Symbol,
+            dataType = request.DataType.ToString()
+        };
 
-            var requestMessage = new HttpRequestMessage(HttpMethod.Post, config.ApiEndpoint)
-            {
-                Content = new StringContent(JsonSerializer.Serialize(mcpRequest), Encoding.UTF8, "application/json")
-            };
-
-            if (!string.IsNullOrEmpty(config.ApiKey))
-            {
-                requestMessage.Headers.Add("Authorization", $"Bearer {config.ApiKey}");
-            }
-
-            var response = await httpClient.SendAsync(requestMessage);
-            
-            if (!response.IsSuccessStatusCode)
-            {
-                _logger.LogWarning("BSE India MCP request failed: {StatusCode}", response.StatusCode);
-                return CreateMockStockPriceData(request.Symbol, "INR");
-            }
-
-            var responseContent = await response.Content.ReadAsStringAsync();
-            var mcpResponse = JsonSerializer.Deserialize<JsonElement>(responseContent);
-            
-            if (mcpResponse.TryGetProperty("content", out var content))
-            {
-                return ParseIndianMarketResponse(content, request, "INR");
-            }
-
+        var (success, response) = await SendMCPRequestAsync(config, "get_bse_quote", arguments);
+        
+        if (!success || !response.HasValue)
+        {
             return CreateMockStockPriceData(request.Symbol, "INR");
         }
-        catch (Exception ex)
-        {
-            _logger.LogWarning(ex, "Failed to fetch from BSE India MCP, returning mock data for {Symbol}", request.Symbol);
-            return CreateMockStockPriceData(request.Symbol, "INR");
-        }
-    }
 
-    private object ParseIndianMarketResponse(JsonElement content, MCPDataRequestDto request, string currency)
-    {
-        if (content.ValueKind == JsonValueKind.Array && content.GetArrayLength() > 0)
+        if (response.Value.TryGetProperty("content", out var content))
         {
-            var firstItem = content[0];
-            if (firstItem.TryGetProperty("text", out var textElement))
+            var stockPrice = TryParseStockPriceResponse(content, request, "INR");
+            if (stockPrice != null)
             {
-                try
-                {
-                    var dataJson = JsonSerializer.Deserialize<JsonElement>(textElement.GetString() ?? "{}");
-                    
-                    if (request.DataType == MCPDataType.RealTimePrice)
-                    {
-                        return new MCPStockPriceResponse
-                        {
-                            Symbol = request.Symbol,
-                            Price = dataJson.TryGetProperty("price", out var price) ? price.GetDecimal() : 0,
-                            Currency = currency,
-                            Timestamp = DateTime.UtcNow,
-                            Open = dataJson.TryGetProperty("open", out var open) ? open.GetDecimal() : null,
-                            High = dataJson.TryGetProperty("high", out var high) ? high.GetDecimal() : null,
-                            Low = dataJson.TryGetProperty("low", out var low) ? low.GetDecimal() : null,
-                            PreviousClose = dataJson.TryGetProperty("previousClose", out var prev) ? prev.GetDecimal() : null,
-                            Volume = dataJson.TryGetProperty("volume", out var vol) ? vol.GetInt64() : null
-                        };
-                    }
-                }
-                catch (Exception ex)
-                {
-                    _logger.LogWarning(ex, "Failed to parse Indian market response");
-                }
+                return stockPrice;
             }
         }
-        
-        return CreateMockStockPriceData(request.Symbol, currency);
+
+        return CreateMockStockPriceData(request.Symbol, "INR");
     }
 
     private MCPStockPriceResponse CreateMockStockPriceData(string symbol, string currency = "USD")
     {
-        var random = new Random(symbol.GetHashCode() + DateTime.UtcNow.Day);
-        var basePrice = currency == "INR" ? 1000m + random.Next(1, 5000) : 100m + random.Next(1, 500);
-        var change = (decimal)(random.NextDouble() * 10 - 5);
-        
-        return new MCPStockPriceResponse
+        lock (_random)
         {
-            Symbol = symbol,
-            Price = basePrice,
-            Currency = currency,
-            Timestamp = DateTime.UtcNow,
-            Open = basePrice - (decimal)random.NextDouble() * 5,
-            High = basePrice + (decimal)random.NextDouble() * 5,
-            Low = basePrice - (decimal)random.NextDouble() * 5,
-            PreviousClose = basePrice - change,
-            Volume = random.Next(1000000, 50000000),
-            Change = change,
-            ChangePercent = (change / (basePrice - change)) * 100,
-            MarketState = DateTime.UtcNow.Hour >= 9 && DateTime.UtcNow.Hour < 16 ? "REGULAR" : "CLOSED"
-        };
+            var seed = symbol.GetHashCode() + DateTime.UtcNow.Day;
+            var symbolRandom = new Random(seed);
+            
+            var basePrice = currency == "INR" ? 1000m + symbolRandom.Next(1, 5000) : 100m + symbolRandom.Next(1, 500);
+            var change = (decimal)(symbolRandom.NextDouble() * 10 - 5);
+            
+            return new MCPStockPriceResponse
+            {
+                Symbol = symbol,
+                Price = basePrice,
+                Currency = currency,
+                Timestamp = DateTime.UtcNow,
+                Open = basePrice - (decimal)symbolRandom.NextDouble() * 5,
+                High = basePrice + (decimal)symbolRandom.NextDouble() * 5,
+                Low = basePrice - (decimal)symbolRandom.NextDouble() * 5,
+                PreviousClose = basePrice - change,
+                Volume = symbolRandom.Next(1000000, 50000000),
+                Change = change,
+                ChangePercent = (change / (basePrice - change)) * 100,
+                MarketState = DateTime.UtcNow.Hour >= 9 && DateTime.UtcNow.Hour < 16 ? "REGULAR" : "CLOSED"
+            };
+        }
     }
 
     private async Task<object> FetchFromCustomServerAsync(MCPServerConfiguration config, MCPDataRequestDto request)
     {
-        var httpClient = _httpClientFactory.CreateClient();
+        var arguments = new
+        {
+            symbol = request.Symbol,
+            dataType = request.DataType.ToString(),
+            startDate = request.StartDate?.ToString("yyyy-MM-dd"),
+            endDate = request.EndDate?.ToString("yyyy-MM-dd"),
+            additionalParameters = request.AdditionalParameters
+        };
+
+        var (success, response) = await SendMCPRequestAsync(config, "get_data", arguments);
+        
+        if (!success || !response.HasValue)
+        {
+            return CreateMockStockPriceData(request.Symbol);
+        }
+
+        if (response.Value.TryGetProperty("content", out var content))
+        {
+            var stockPrice = TryParseStockPriceResponse(content, request);
+            if (stockPrice != null)
+            {
+                return stockPrice;
+            }
+        }
+
+        return CreateMockStockPriceData(request.Symbol);
+    }
+
+    /// <summary>
+    /// Helper method to send MCP request to a server
+    /// </summary>
+    private async Task<(bool Success, JsonElement? Response)> SendMCPRequestAsync(
+        MCPServerConfiguration config,
+        string toolName,
+        object arguments)
+    {
+        using var httpClient = _httpClientFactory.CreateClient();
         
         try
         {
@@ -510,15 +314,8 @@ public class MCPDataService : IMCPDataService
                 method = "tools/call",
                 @params = new
                 {
-                    name = "get_data",
-                    arguments = new
-                    {
-                        symbol = request.Symbol,
-                        dataType = request.DataType.ToString(),
-                        startDate = request.StartDate?.ToString("yyyy-MM-dd"),
-                        endDate = request.EndDate?.ToString("yyyy-MM-dd"),
-                        additionalParameters = request.AdditionalParameters
-                    }
+                    name = toolName,
+                    arguments
                 }
             };
 
@@ -532,73 +329,75 @@ public class MCPDataService : IMCPDataService
                 requestMessage.Headers.Add("Authorization", $"Bearer {config.ApiKey}");
             }
 
-            _logger.LogInformation("Calling custom MCP server at {Endpoint}", config.ApiEndpoint);
-            
             var response = await httpClient.SendAsync(requestMessage);
             
             if (!response.IsSuccessStatusCode)
             {
                 var errorContent = await response.Content.ReadAsStringAsync();
-                _logger.LogWarning("Custom MCP server request failed: {StatusCode} - {Error}", 
-                    response.StatusCode, errorContent);
-                
-                return CreateMockStockPriceData(request.Symbol);
+                _logger.LogWarning("MCP request to {Provider} failed: {StatusCode} - {Error}", 
+                    config.ProviderType, response.StatusCode, errorContent);
+                return (false, null);
             }
 
             var responseContent = await response.Content.ReadAsStringAsync();
             var mcpResponse = JsonSerializer.Deserialize<JsonElement>(responseContent);
             
-            if (mcpResponse.TryGetProperty("content", out var content))
-            {
-                return ParseCustomServerResponse(content, request);
-            }
-
-            return CreateMockStockPriceData(request.Symbol);
+            return (true, mcpResponse);
         }
         catch (Exception ex)
         {
-            _logger.LogWarning(ex, "Failed to fetch from custom MCP server, returning mock data for {Symbol}", request.Symbol);
-            return CreateMockStockPriceData(request.Symbol);
+            _logger.LogWarning(ex, "Failed to send MCP request to {Provider}", config.ProviderType);
+            return (false, null);
         }
     }
 
-    private object ParseCustomServerResponse(JsonElement content, MCPDataRequestDto request)
+    /// <summary>
+    /// Helper method to parse stock price from MCP response
+    /// </summary>
+    private MCPStockPriceResponse? TryParseStockPriceResponse(
+        JsonElement? content,
+        MCPDataRequestDto request,
+        string defaultCurrency = "USD")
     {
-        if (content.ValueKind == JsonValueKind.Array && content.GetArrayLength() > 0)
+        if (!content.HasValue || content.Value.ValueKind != JsonValueKind.Array || content.Value.GetArrayLength() == 0)
         {
-            var firstItem = content[0];
-            if (firstItem.TryGetProperty("text", out var textElement))
+            return null;
+        }
+
+        var firstItem = content.Value[0];
+        if (!firstItem.TryGetProperty("text", out var textElement))
+        {
+            return null;
+        }
+
+        try
+        {
+            var dataJson = JsonSerializer.Deserialize<JsonElement>(textElement.GetString() ?? "{}");
+            
+            if (request.DataType == MCPDataType.RealTimePrice)
             {
-                try
+                return new MCPStockPriceResponse
                 {
-                    var dataJson = JsonSerializer.Deserialize<JsonElement>(textElement.GetString() ?? "{}");
-                    
-                    if (request.DataType == MCPDataType.RealTimePrice)
-                    {
-                        return new MCPStockPriceResponse
-                        {
-                            Symbol = request.Symbol,
-                            Price = dataJson.TryGetProperty("price", out var price) ? price.GetDecimal() : 0,
-                            Currency = dataJson.TryGetProperty("currency", out var currency) ? currency.GetString() ?? "USD" : "USD",
-                            Timestamp = DateTime.UtcNow,
-                            Open = dataJson.TryGetProperty("open", out var open) ? open.GetDecimal() : null,
-                            High = dataJson.TryGetProperty("high", out var high) ? high.GetDecimal() : null,
-                            Low = dataJson.TryGetProperty("low", out var low) ? low.GetDecimal() : null,
-                            PreviousClose = dataJson.TryGetProperty("previousClose", out var prev) ? prev.GetDecimal() : null,
-                            Volume = dataJson.TryGetProperty("volume", out var vol) ? vol.GetInt64() : null,
-                            Change = dataJson.TryGetProperty("change", out var change) ? change.GetDecimal() : null,
-                            ChangePercent = dataJson.TryGetProperty("changePercent", out var changePct) ? changePct.GetDecimal() : null,
-                            MarketState = dataJson.TryGetProperty("marketState", out var state) ? state.GetString() : null
-                        };
-                    }
-                }
-                catch (Exception ex)
-                {
-                    _logger.LogWarning(ex, "Failed to parse custom server response");
-                }
+                    Symbol = request.Symbol,
+                    Price = dataJson.TryGetProperty("price", out var price) ? price.GetDecimal() : 0,
+                    Currency = dataJson.TryGetProperty("currency", out var currency) ? currency.GetString() ?? defaultCurrency : defaultCurrency,
+                    Timestamp = DateTime.UtcNow,
+                    Open = dataJson.TryGetProperty("open", out var open) ? open.GetDecimal() : null,
+                    High = dataJson.TryGetProperty("high", out var high) ? high.GetDecimal() : null,
+                    Low = dataJson.TryGetProperty("low", out var low) ? low.GetDecimal() : null,
+                    PreviousClose = dataJson.TryGetProperty("previousClose", out var prev) ? prev.GetDecimal() : null,
+                    Volume = dataJson.TryGetProperty("volume", out var vol) ? vol.GetInt64() : null,
+                    Change = dataJson.TryGetProperty("change", out var change) ? change.GetDecimal() : null,
+                    ChangePercent = dataJson.TryGetProperty("changePercent", out var changePct) ? changePct.GetDecimal() : null,
+                    MarketState = dataJson.TryGetProperty("marketState", out var state) ? state.GetString() : null
+                };
             }
         }
-        
-        return CreateMockStockPriceData(request.Symbol);
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Failed to parse stock price response");
+        }
+
+        return null;
     }
 }

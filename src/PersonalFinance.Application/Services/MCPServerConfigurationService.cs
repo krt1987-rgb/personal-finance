@@ -149,7 +149,7 @@ public class MCPServerConfigurationService : IMCPServerConfigurationService
         
         try
         {
-            var httpClient = _httpClientFactory.CreateClient();
+            using var httpClient = _httpClientFactory.CreateClient();
             httpClient.Timeout = TimeSpan.FromSeconds(10);
             
             // Test connection by sending a simple MCP tools/list request
