@@ -16,6 +16,9 @@ public class StockAnalysisService : IStockAnalysisService
     private readonly IAIService _aiService;
     private readonly ILogger<StockAnalysisService> _logger;
 
+    // Confidence score constants
+    private const decimal SECTION_SCORE_WEIGHT = 6.25m; // Each section contributes 25% / 4 sections = 6.25%
+
     public StockAnalysisService(
         IRepository<StockAnalysis> analysisRepository,
         IRepository<AIModelConfiguration> configRepository,
@@ -473,16 +476,16 @@ public class StockAnalysisService : IStockAnalysisService
         
         // Check if each section is present and not N/A
         if (!string.IsNullOrWhiteSpace(result.Summary) && result.Summary != "N/A")
-            score += 6.25m;
+            score += SECTION_SCORE_WEIGHT;
         
         if (!string.IsNullOrWhiteSpace(result.KeyInsights) && result.KeyInsights != "N/A")
-            score += 6.25m;
+            score += SECTION_SCORE_WEIGHT;
         
         if (!string.IsNullOrWhiteSpace(result.Risks) && result.Risks != "N/A")
-            score += 6.25m;
+            score += SECTION_SCORE_WEIGHT;
         
         if (!string.IsNullOrWhiteSpace(result.Recommendation) && result.Recommendation != "N/A")
-            score += 6.25m;
+            score += SECTION_SCORE_WEIGHT;
 
         return score;
     }
@@ -517,16 +520,16 @@ public class StockAnalysisService : IStockAnalysisService
         
         // Check length and quality of each section
         if (result.Summary?.Length > 20)
-            score += 6.25m;
+            score += SECTION_SCORE_WEIGHT;
         
         if (result.KeyInsights?.Length > 30)
-            score += 6.25m;
+            score += SECTION_SCORE_WEIGHT;
         
         if (result.Risks?.Length > 20)
-            score += 6.25m;
+            score += SECTION_SCORE_WEIGHT;
         
         if (result.Recommendation?.Length > 20)
-            score += 6.25m;
+            score += SECTION_SCORE_WEIGHT;
 
         return score;
     }
