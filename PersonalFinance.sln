@@ -13,6 +13,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PersonalFinance.Infrastruct
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PersonalFinance.API", "src\PersonalFinance.API\PersonalFinance.API.csproj", "{6B892023-2B7D-4C96-AD95-68440DA95B47}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PersonalFinance.DatabaseMigration", "src\PersonalFinance.DatabaseMigration\PersonalFinance.DatabaseMigration.csproj", "{8F54DCEF-C062-46EE-9DD7-BC2CAB0752F3}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -71,6 +73,18 @@ Global
 		{6B892023-2B7D-4C96-AD95-68440DA95B47}.Release|x64.Build.0 = Release|Any CPU
 		{6B892023-2B7D-4C96-AD95-68440DA95B47}.Release|x86.ActiveCfg = Release|Any CPU
 		{6B892023-2B7D-4C96-AD95-68440DA95B47}.Release|x86.Build.0 = Release|Any CPU
+		{8F54DCEF-C062-46EE-9DD7-BC2CAB0752F3}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{8F54DCEF-C062-46EE-9DD7-BC2CAB0752F3}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{8F54DCEF-C062-46EE-9DD7-BC2CAB0752F3}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{8F54DCEF-C062-46EE-9DD7-BC2CAB0752F3}.Debug|x64.Build.0 = Debug|Any CPU
+		{8F54DCEF-C062-46EE-9DD7-BC2CAB0752F3}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{8F54DCEF-C062-46EE-9DD7-BC2CAB0752F3}.Debug|x86.Build.0 = Debug|Any CPU
+		{8F54DCEF-C062-46EE-9DD7-BC2CAB0752F3}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{8F54DCEF-C062-46EE-9DD7-BC2CAB0752F3}.Release|Any CPU.Build.0 = Release|Any CPU
+		{8F54DCEF-C062-46EE-9DD7-BC2CAB0752F3}.Release|x64.ActiveCfg = Release|Any CPU
+		{8F54DCEF-C062-46EE-9DD7-BC2CAB0752F3}.Release|x64.Build.0 = Release|Any CPU
+		{8F54DCEF-C062-46EE-9DD7-BC2CAB0752F3}.Release|x86.ActiveCfg = Release|Any CPU
+		{8F54DCEF-C062-46EE-9DD7-BC2CAB0752F3}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -80,5 +94,6 @@ Global
 		{2267B8D7-FBC9-42F7-9D49-CAB936C8F47C} = {827E0CD3-B72D-47B6-A68D-7590B98EB39B}
 		{5C9BD07D-69F3-4EF1-B6EF-330CD70060B0} = {827E0CD3-B72D-47B6-A68D-7590B98EB39B}
 		{6B892023-2B7D-4C96-AD95-68440DA95B47} = {827E0CD3-B72D-47B6-A68D-7590B98EB39B}
+		{8F54DCEF-C062-46EE-9DD7-BC2CAB0752F3} = {827E0CD3-B72D-47B6-A68D-7590B98EB39B}
 	EndGlobalSection
 EndGlobal

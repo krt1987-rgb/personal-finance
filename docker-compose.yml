@@ -20,6 +20,21 @@ services:
       timeout: 5s
       retries: 5
 
+  db-migration:
+    build:
+      context: .
+      dockerfile: src/PersonalFinance.DatabaseMigration/Dockerfile
+    container_name: personalfinance-db-migration
+    environment:
+      - ConnectionStrings__DefaultConnection=Host=postgres;Port=5432;Database=PersonalFinanceDb;Username=postgres;Password=postgres
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - personalfinance-network
+    profiles:
+      - migration
+
   api:
     build:
       context: .
