@@ -1,11 +1,12 @@
-import { Component, signal, output } from '@angular/core';
+import { Component, signal, output, inject, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RouterModule } from '@angular/router';
+import { Router, RouterModule } from '@angular/router';
 import { MatToolbarModule } from '@angular/material/toolbar';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatMenuModule } from '@angular/material/menu';
 import { MatDividerModule } from '@angular/material/divider';
+import { AuthService } from '../../../shared/services/auth/auth.service';
 
 @Component({
   selector: 'app-header',
@@ -21,17 +22,34 @@ import { MatDividerModule } from '@angular/material/divider';
   templateUrl: './header.component.html',
   styleUrl: './header.component.scss'
 })
-export class HeaderComponent {
+export class HeaderComponent implements OnInit {
   toggleSidebar = output<void>();
-  isAuthenticated = signal(false); // TODO: Connect to auth service
+  isAuthenticated = signal(false);
   userName = signal('Guest');
+  
+  private readonly authService = inject(AuthService);
+  private readonly router = inject(Router);
+
+  ngOnInit(): void {
+    // Subscribe to authentication status
+    this.authService.isAuthenticated$.subscribe(isAuth => {
+      this.isAuthenticated.set(isAuth);
+      
+      if (isAuth) {
+        const user = this.authService.getUserInfo();
+        this.userName.set(user?.name || 'User');
+      } else {
+        this.userName.set('Guest');
+      }
+    });
+  }
 
   onToggleSidebar(): void {
     this.toggleSidebar.emit();
   }
 
   onLogout(): void {
-    // TODO: Implement logout logic
-    console.log('Logout clicked');
+    this.authService.logout();
+    this.router.navigate(['/auth/login']);
   }
 }

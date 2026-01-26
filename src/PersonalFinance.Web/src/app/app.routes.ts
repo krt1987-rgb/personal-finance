@@ -10,6 +10,7 @@ import { FixedDepositsComponent } from './features/banking/fixed-deposits/fixed-
 import { ProvidentFundComponent } from './features/provident-fund/provident-fund.component';
 import { FamilyComponent } from './features/family/family.component';
 import { ReportsComponent } from './features/reports/reports.component';
+import { authGuard } from './shared/guards/auth.guard';
 
 export const routes: Routes = [
   {
@@ -23,6 +24,7 @@ export const routes: Routes = [
   {
     path: '',
     component: MainLayoutComponent,
+    canActivate: [authGuard],
     children: [
       { path: 'dashboard', component: DashboardComponent },
       { 
