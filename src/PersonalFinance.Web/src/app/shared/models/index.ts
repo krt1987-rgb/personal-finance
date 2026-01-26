@@ -60,3 +60,6 @@ export interface FamilyMember {
   dateOfBirth: Date;
   occupation: string;
 }
+
+// AI Models
+export * from './ai.model';
