@@ -74,6 +74,10 @@ export class ImportDialogComponent {
       case 'familyMembers':
         importObservable = this.importService.importFamilyMembers(this.selectedFile);
         break;
+      default:
+        this.isUploading = false;
+        this.snackBar.open('Unknown module type', 'Close', { duration: 3000 });
+        return;
     }
 
     importObservable.subscribe({

@@ -1,7 +1,7 @@
 <div class="file-upload-container">
   <input
+    #fileInput
     type="file"
-    id="fileInput"
     (change)="onFileChange($event)"
     [accept]="acceptedFormats()"
     style="display: none;"

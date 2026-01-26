@@ -1,0 +1,4 @@
+FolioNumber,SchemeName,AMC,ISIN,Category,Units,AverageNAV,CurrentNAV,InvestmentMode
+12345/67,SBI Bluechip Fund,SBI Mutual Fund,INF200K01VX1,Equity,100.50,65.00,75.00,SIP
+98765/43,HDFC Balanced Advantage Fund,HDFC Mutual Fund,INF179K01VY2,Hybrid,250.75,45.00,50.00,Lumpsum
+11223/44,ICICI Prudential Tax Plan,ICICI Prudential MF,INF109K01VZ3,Equity,150.00,55.00,60.00,SIP

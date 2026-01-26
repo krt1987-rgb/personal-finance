@@ -204,24 +204,25 @@ public class ImportService : IImportService
 
             result.TotalRows = records.Count;
 
+            // Load all user's bank accounts once to avoid N+1 queries
+            var userBankAccounts = (await _bankAccountRepository.FindAsync(ba => ba.UserId == userId))
+                .ToDictionary(ba => ba.AccountNumber, ba => ba.Id);
+
             for (int i = 0; i < records.Count; i++)
             {
                 try
                 {
                     var record = records[i];
                     
-                    // Get bank account by account number
-                    var bankAccount = (await _bankAccountRepository.FindAsync(
-                        ba => ba.UserId == userId && ba.AccountNumber == record.BankAccountNumber)).FirstOrDefault();
-                    
-                    if (bankAccount == null)
+                    // Get bank account from pre-loaded dictionary
+                    if (!userBankAccounts.TryGetValue(record.BankAccountNumber ?? string.Empty, out var bankAccountId))
                     {
                         throw new Exception($"Bank account {record.BankAccountNumber} not found");
                     }
 
                     var fd = new FixedDeposit
                     {
-                        BankAccountId = bankAccount.Id,
+                        BankAccountId = bankAccountId,
                         FDNumber = record.FDNumber ?? string.Empty,
                         PrincipalAmount = record.PrincipalAmount,
                         InterestRate = record.InterestRate,
@@ -520,9 +521,17 @@ public class ImportService : IImportService
                                 Nullable.GetUnderlyingType(prop.PropertyType) ?? prop.PropertyType);
                             prop.SetValue(record, convertedValue);
                         }
-                        catch
+                        catch (InvalidCastException)
                         {
                             // Keep default value if conversion fails
+                        }
+                        catch (FormatException)
+                        {
+                            // Keep default value if format is invalid
+                        }
+                        catch (OverflowException)
+                        {
+                            // Keep default value if value is too large/small
                         }
                     }
                 }

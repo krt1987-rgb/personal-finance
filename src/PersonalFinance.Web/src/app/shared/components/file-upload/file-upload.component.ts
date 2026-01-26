@@ -1,4 +1,4 @@
-import { Component, Output, EventEmitter, input } from '@angular/core';
+import { Component, Output, EventEmitter, input, ViewChild, ElementRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
@@ -20,6 +20,7 @@ import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 })
 export class FileUploadComponent {
   @Output() fileSelected = new EventEmitter<File>();
+  @ViewChild('fileInput') fileInput!: ElementRef<HTMLInputElement>;
   
   acceptedFormats = input<string>('.csv, .xlsx, .xls');
   buttonText = input<string>('Import Data');
@@ -47,7 +48,6 @@ export class FileUploadComponent {
   }
 
   triggerFileInput(): void {
-    const fileInput = document.getElementById('fileInput') as HTMLInputElement;
-    fileInput?.click();
+    this.fileInput.nativeElement.click();
   }
 }
