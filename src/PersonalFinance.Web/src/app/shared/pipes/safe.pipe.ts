@@ -10,7 +10,9 @@ export class SafePipe implements PipeTransform {
 
   transform(value: string, type: string): SafeHtml | string {
     if (type === 'html') {
-      return this.sanitizer.bypassSecurityTrustHtml(value);
+      // Use sanitize instead of bypass to maintain XSS protection
+      const sanitized = this.sanitizer.sanitize(1, value); // SecurityContext.HTML = 1
+      return sanitized || '';
     }
     return value;
   }

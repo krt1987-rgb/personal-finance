@@ -18,8 +18,8 @@ public class AIModelConfigurationDto
     public decimal? Temperature { get; set; }
     public int? MaxTokens { get; set; }
     public decimal? TopP { get; set; }
-    public int? FrequencyPenalty { get; set; }
-    public int? PresencePenalty { get; set; }
+    public decimal? FrequencyPenalty { get; set; }
+    public decimal? PresencePenalty { get; set; }
     public int? RequestsPerMinute { get; set; }
     public int? RequestsPerDay { get; set; }
     public DateTime CreatedAt { get; set; }
@@ -39,8 +39,8 @@ public class CreateAIModelConfigurationDto
     public decimal? Temperature { get; set; }
     public int? MaxTokens { get; set; }
     public decimal? TopP { get; set; }
-    public int? FrequencyPenalty { get; set; }
-    public int? PresencePenalty { get; set; }
+    public decimal? FrequencyPenalty { get; set; }
+    public decimal? PresencePenalty { get; set; }
     public int? RequestsPerMinute { get; set; }
     public int? RequestsPerDay { get; set; }
 }
@@ -56,8 +56,8 @@ public class UpdateAIModelConfigurationDto
     public decimal? Temperature { get; set; }
     public int? MaxTokens { get; set; }
     public decimal? TopP { get; set; }
-    public int? FrequencyPenalty { get; set; }
-    public int? PresencePenalty { get; set; }
+    public decimal? FrequencyPenalty { get; set; }
+    public decimal? PresencePenalty { get; set; }
     public int? RequestsPerMinute { get; set; }
     public int? RequestsPerDay { get; set; }
 }

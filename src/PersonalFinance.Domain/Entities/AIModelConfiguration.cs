@@ -20,8 +20,8 @@ public class AIModelConfiguration : BaseEntity
     public decimal? Temperature { get; set; }
     public int? MaxTokens { get; set; }
     public decimal? TopP { get; set; }
-    public int? FrequencyPenalty { get; set; }
-    public int? PresencePenalty { get; set; }
+    public decimal? FrequencyPenalty { get; set; }
+    public decimal? PresencePenalty { get; set; }
     
     // Rate limiting
     public int? RequestsPerMinute { get; set; }

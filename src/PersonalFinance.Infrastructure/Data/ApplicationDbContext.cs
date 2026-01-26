@@ -237,7 +237,7 @@ public class ApplicationDbContext : DbContext
         {
             entity.HasKey(e => e.Id);
             entity.Property(e => e.Symbol).IsRequired().HasMaxLength(20);
-            entity.Property(e => e.CompanyName).HasMaxLength(200);
+            entity.Property(e => e.CompanyName).IsRequired().HasMaxLength(200);
             entity.Property(e => e.ConfidenceScore).HasPrecision(3, 2);
             entity.Property(e => e.AnalysisCost).HasPrecision(10, 4);
             entity.HasOne(e => e.User)

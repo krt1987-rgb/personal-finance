@@ -63,10 +63,21 @@ public class AIService : IAIService
         try
         {
             var testPrompt = "Hello, this is a test.";
+            
+            // Select appropriate model type based on provider
+            var modelType = providerType switch
+            {
+                AIProviderType.OpenAI => AIModelType.GPT35Turbo,
+                AIProviderType.Anthropic => AIModelType.Claude3Haiku,
+                AIProviderType.GoogleGemini => AIModelType.GeminiPro,
+                AIProviderType.Ollama => AIModelType.Llama2,
+                _ => AIModelType.GPT35Turbo
+            };
+            
             await GenerateCompletionAsync(
                 testPrompt,
                 providerType,
-                AIModelType.GPT35Turbo, // Use a simple model for validation
+                modelType,
                 apiKey,
                 apiEndpoint,
                 temperature: 0.5m,
