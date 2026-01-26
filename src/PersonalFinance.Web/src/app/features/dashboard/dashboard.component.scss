@@ -1,6 +1,29 @@
 .dashboard {
-  h1 {
+  .dashboard-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
     margin-bottom: 1.5rem;
+
+    h1 {
+      margin: 0;
+    }
+
+    button {
+      mat-icon {
+        margin-right: 0.5rem;
+      }
+    }
+  }
+
+  .loading, .error {
+    text-align: center;
+    padding: 2rem;
+    font-size: 1.1rem;
+  }
+
+  .error {
+    color: #f44336;
   }
 }
 
@@ -54,6 +77,29 @@
   mat-card {
     mat-card-header {
       margin-bottom: 1rem;
+    }
+  }
+
+  .breakdown-list {
+    .breakdown-item {
+      display: flex;
+      justify-content: space-between;
+      padding: 0.75rem 0;
+      border-bottom: 1px solid #eee;
+
+      &:last-child {
+        border-bottom: none;
+      }
+
+      .breakdown-label {
+        font-weight: 500;
+        color: #666;
+      }
+
+      .breakdown-value {
+        font-weight: 600;
+        color: #333;
+      }
     }
   }
 }
