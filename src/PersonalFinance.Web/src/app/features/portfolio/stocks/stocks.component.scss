@@ -1,0 +1,43 @@
+.stocks-page {
+  .page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+  }
+}
+
+.no-data {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 4rem 2rem;
+  color: #999;
+  
+  mat-icon {
+    font-size: 64px;
+    width: 64px;
+    height: 64px;
+    margin-bottom: 1rem;
+  }
+  
+  p {
+    margin-bottom: 1rem;
+    font-size: 1.1rem;
+  }
+}
+
+.full-width {
+  width: 100%;
+}
+
+.profit {
+  color: #4caf50;
+  font-weight: 500;
+}
+
+.loss {
+  color: #f44336;
+  font-weight: 500;
+}
