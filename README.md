@@ -427,6 +427,20 @@ curl -X POST http://localhost:5000/api/database/migrate
 
 For comprehensive migration instructions including Supabase configuration, see [DATABASE_MIGRATION_GUIDE.md](DATABASE_MIGRATION_GUIDE.md)
 
+## 📚 Research & Planning Documents
+
+### Wealth Tracking Enhancement Research
+Comprehensive research on features needed to track wealth over time:
+- **[Wealth Tracking Research](WEALTH_TRACKING_RESEARCH.md)** - 80+ page detailed analysis covering 38 prioritized features across 3 phases, complete with data models, API designs, competitive analysis, and implementation roadmap
+- **[Wealth Tracking Quick Guide](WEALTH_TRACKING_QUICK_GUIDE.md)** - Concise 4-week implementation guide with checklists, mockups, and success metrics
+
+**Key Recommendations**:
+- 🔴 **Priority 1 (Must Have)**: Net worth dashboard, liability tracking, historical snapshots, basic visualizations
+- 🟡 **Priority 2 (Should Have)**: Goal tracking, expense tracking, tax planning, real estate tracking
+- 🟢 **Priority 3 (Nice to Have)**: Multi-currency, automated imports, predictive analytics, mobile app
+
+See research documents for complete analysis and phased implementation plan.
+
 ## 🌐 Future Enhancements
 
 ### Phase 1 (Current)
@@ -453,6 +467,17 @@ For comprehensive migration instructions including Supabase configuration, see [
 - 📋 Predictive analytics
 - 📋 Automated reporting
 - 📋 Mobile app (React Native)
+
+### Phase 4 (Planned - Wealth Tracking)
+Based on comprehensive research (see documents above):
+- 📋 **Net worth dashboard & calculation**
+- 📋 **Liability tracking** (loans, credit cards, mortgages)
+- 📋 **Wealth snapshots** (historical tracking over time)
+- 📋 **Visualizations** (net worth trends, asset allocation charts)
+- 📋 **Goal tracking & planning**
+- 📋 **Expense & income tracking**
+- 📋 **Tax planning & reporting**
+- 📋 **Real estate & other assets**
 
 ## 🤝 Contributing
 
