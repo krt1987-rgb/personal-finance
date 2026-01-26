@@ -18,7 +18,6 @@ public class MCPDataService : IMCPDataService
     private readonly IRepository<MCPServerConfiguration> _configRepository;
     private readonly IHttpClientFactory _httpClientFactory;
     private readonly ILogger<MCPDataService> _logger;
-    private static readonly Random _random = new();
 
     public MCPDataService(
         IRepository<MCPServerConfiguration> configRepository,
@@ -241,19 +240,14 @@ public class MCPDataService : IMCPDataService
 
     private MCPStockPriceResponse CreateMockStockPriceData(string symbol, string currency = "USD")
     {
-        // Use deterministic seed based on symbol to get consistent results
+        // Use deterministic seed based on symbol to get consistent results for the same symbol on the same day
         var seed = symbol.GetHashCode() + DateTime.UtcNow.Day;
-        int baseValue, priceRange, volumeMin, volumeMax;
+        var symbolRandom = new Random(seed);
         
-        lock (_random)
-        {
-            // Use the shared random instance within the lock for thread safety
-            var tempRandom = new Random(seed);
-            baseValue = currency == "INR" ? tempRandom.Next(1000, 6000) : tempRandom.Next(100, 600);
-            priceRange = tempRandom.Next(1, 10);
-            volumeMin = tempRandom.Next(1000000, 25000000);
-            volumeMax = tempRandom.Next(25000000, 50000000);
-        }
+        var baseValue = currency == "INR" ? symbolRandom.Next(1000, 6000) : symbolRandom.Next(100, 600);
+        var priceRange = symbolRandom.Next(1, 10);
+        var volumeMin = symbolRandom.Next(1000000, 25000000);
+        var volumeMax = symbolRandom.Next(25000000, 50000000);
         
         var basePrice = (decimal)baseValue;
         var change = (decimal)(priceRange - 5);
@@ -396,9 +390,14 @@ public class MCPDataService : IMCPDataService
 
         try
         {
-            var dataJson = string.IsNullOrEmpty(textElement.GetString()) 
-                ? JsonDocument.Parse("{}").RootElement 
-                : JsonSerializer.Deserialize<JsonElement>(textElement.GetString()!);
+            var jsonString = textElement.GetString();
+            if (string.IsNullOrEmpty(jsonString))
+            {
+                _logger.LogWarning("MCP response text content is empty for {Symbol}", request.Symbol);
+                return null;
+            }
+
+            var dataJson = JsonSerializer.Deserialize<JsonElement>(jsonString);
             
             if (request.DataType == MCPDataType.RealTimePrice)
             {

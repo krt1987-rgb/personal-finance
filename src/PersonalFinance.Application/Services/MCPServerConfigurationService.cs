@@ -198,8 +198,6 @@ public class MCPServerConfigurationService : IMCPServerConfigurationService
             else
             {
                 var errorMessage = $"HTTP {(int)response.StatusCode}: {response.ReasonPhrase}";
-                _logger.LogWarning("Connection test failed for MCP server {ConfigId}: {StatusCode} {ReasonPhrase}", 
-                    id, (int)response.StatusCode, response.ReasonPhrase);
                 
                 config.ConnectionStatus = MCPConnectionStatus.Error;
                 config.LastErrorMessage = errorMessage;
