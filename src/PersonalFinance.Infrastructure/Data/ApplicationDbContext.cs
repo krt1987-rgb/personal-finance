@@ -24,6 +24,8 @@ public class ApplicationDbContext : DbContext
     public DbSet<Transaction> Transactions { get; set; } = null!;
     public DbSet<RefreshToken> RefreshTokens { get; set; } = null!;
     public DbSet<PasswordResetToken> PasswordResetTokens { get; set; } = null!;
+    public DbSet<AIModelConfiguration> AIModelConfigurations { get; set; } = null!;
+    public DbSet<StockAnalysis> StockAnalyses { get; set; } = null!;
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -208,6 +210,48 @@ public class ApplicationDbContext : DbContext
                 .WithMany()
                 .HasForeignKey(e => e.UserId)
                 .OnDelete(DeleteBehavior.Cascade);
+                
+            entity.HasQueryFilter(e => !e.IsDeleted);
+        });
+
+        // Configure AIModelConfiguration entity
+        modelBuilder.Entity<AIModelConfiguration>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Name).IsRequired().HasMaxLength(200);
+            entity.Property(e => e.ApiKey).IsRequired().HasMaxLength(500);
+            entity.Property(e => e.ApiEndpoint).HasMaxLength(500);
+            entity.Property(e => e.CustomModelName).HasMaxLength(200);
+            entity.Property(e => e.Temperature).HasPrecision(3, 2);
+            entity.Property(e => e.TopP).HasPrecision(3, 2);
+            entity.HasOne(e => e.User)
+                .WithMany()
+                .HasForeignKey(e => e.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+                
+            entity.HasQueryFilter(e => !e.IsDeleted);
+        });
+
+        // Configure StockAnalysis entity
+        modelBuilder.Entity<StockAnalysis>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Symbol).IsRequired().HasMaxLength(20);
+            entity.Property(e => e.CompanyName).HasMaxLength(200);
+            entity.Property(e => e.ConfidenceScore).HasPrecision(3, 2);
+            entity.Property(e => e.AnalysisCost).HasPrecision(10, 4);
+            entity.HasOne(e => e.User)
+                .WithMany()
+                .HasForeignKey(e => e.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+            entity.HasOne(e => e.StockHolding)
+                .WithMany()
+                .HasForeignKey(e => e.StockHoldingId)
+                .OnDelete(DeleteBehavior.SetNull);
+            entity.HasOne(e => e.AIModelConfiguration)
+                .WithMany(a => a.StockAnalyses)
+                .HasForeignKey(e => e.AIModelConfigurationId)
+                .OnDelete(DeleteBehavior.SetNull);
                 
             entity.HasQueryFilter(e => !e.IsDeleted);
         });

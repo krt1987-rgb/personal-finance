@@ -1,3 +1,4 @@
+using Microsoft.Extensions.Logging;
 using PersonalFinance.Application.DTOs;
 using PersonalFinance.Application.Interfaces;
 using PersonalFinance.Domain.Entities;
