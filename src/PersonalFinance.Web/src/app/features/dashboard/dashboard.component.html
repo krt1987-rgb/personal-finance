@@ -1,5 +1,19 @@
 <div class="dashboard">
-  <h1>Dashboard</h1>
+  <div class="dashboard-header">
+    <h1>Dashboard</h1>
+    <button mat-raised-button color="primary" (click)="createSnapshot()" [disabled]="loading">
+      <mat-icon>camera_alt</mat-icon>
+      Create Snapshot
+    </button>
+  </div>
+
+  @if (loading) {
+    <div class="loading">Loading wealth data...</div>
+  }
+
+  @if (error) {
+    <div class="error">{{ error }}</div>
+  }
   
   <mat-grid-list cols="4" rowHeight="150px" gutterSize="16">
     @for (stat of stats; track stat.title) {
@@ -22,19 +36,42 @@
   <div class="dashboard-content">
     <mat-card>
       <mat-card-header>
-        <mat-card-title>Recent Transactions</mat-card-title>
+        <mat-card-title>Asset Allocation</mat-card-title>
       </mat-card-header>
       <mat-card-content>
-        <p class="no-data">No recent transactions</p>
+        @if (netWorth && netWorth.totalAssets > 0) {
+          <apx-chart
+            [series]="assetAllocationChartOptions.series!"
+            [chart]="assetAllocationChartOptions.chart!"
+            [labels]="assetAllocationChartOptions.labels!"
+            [legend]="assetAllocationChartOptions.legend!"
+            [colors]="assetAllocationChartOptions.colors!">
+          </apx-chart>
+        } @else {
+          <p class="no-data">No asset data available</p>
+        }
       </mat-card-content>
     </mat-card>
     
     <mat-card>
       <mat-card-header>
-        <mat-card-title>Portfolio Performance</mat-card-title>
+        <mat-card-title>Asset Breakdown</mat-card-title>
       </mat-card-header>
       <mat-card-content>
-        <p class="no-data">Chart will be displayed here</p>
+        @if (netWorth) {
+          <div class="breakdown-list">
+            @for (item of netWorth.assetBreakdown | keyvalue; track item.key) {
+              @if (item.value > 0) {
+                <div class="breakdown-item">
+                  <span class="breakdown-label">{{ item.key }}:</span>
+                  <span class="breakdown-value">{{ formatCurrency(item.value) }}</span>
+                </div>
+              }
+            }
+          </div>
+        } @else {
+          <p class="no-data">No breakdown available</p>
+        }
       </mat-card-content>
     </mat-card>
   </div>

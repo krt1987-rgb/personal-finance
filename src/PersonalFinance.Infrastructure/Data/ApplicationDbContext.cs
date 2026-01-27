@@ -27,6 +27,7 @@ public class ApplicationDbContext : DbContext
     public DbSet<AIModelConfiguration> AIModelConfigurations { get; set; } = null!;
     public DbSet<StockAnalysis> StockAnalyses { get; set; } = null!;
     public DbSet<MCPServerConfiguration> MCPServerConfigurations { get; set; } = null!;
+    public DbSet<WealthSnapshot> WealthSnapshots { get; set; } = null!;
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -266,6 +267,34 @@ public class ApplicationDbContext : DbContext
             entity.Property(e => e.ApiKey).HasMaxLength(500);
             entity.Property(e => e.SupportedDataTypes).HasMaxLength(200);
             entity.Property(e => e.LastErrorMessage).HasMaxLength(1000);
+            entity.HasOne(e => e.User)
+                .WithMany()
+                .HasForeignKey(e => e.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+                
+            entity.HasQueryFilter(e => !e.IsDeleted);
+        });
+
+        // Configure WealthSnapshot entity
+        modelBuilder.Entity<WealthSnapshot>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.TotalAssets).HasPrecision(18, 2);
+            entity.Property(e => e.TotalLiabilities).HasPrecision(18, 2);
+            entity.Property(e => e.NetWorth).HasPrecision(18, 2);
+            entity.Property(e => e.StocksValue).HasPrecision(18, 2);
+            entity.Property(e => e.MutualFundsValue).HasPrecision(18, 2);
+            entity.Property(e => e.BankAccountsBalance).HasPrecision(18, 2);
+            entity.Property(e => e.FixedDepositsValue).HasPrecision(18, 2);
+            entity.Property(e => e.ProvidentFundsBalance).HasPrecision(18, 2);
+            entity.Property(e => e.RealEstateValue).HasPrecision(18, 2);
+            entity.Property(e => e.OtherAssetsValue).HasPrecision(18, 2);
+            entity.Property(e => e.HomeLoanOutstanding).HasPrecision(18, 2);
+            entity.Property(e => e.PersonalLoanOutstanding).HasPrecision(18, 2);
+            entity.Property(e => e.CreditCardOutstanding).HasPrecision(18, 2);
+            entity.Property(e => e.OtherLiabilitiesOutstanding).HasPrecision(18, 2);
+            entity.Property(e => e.SnapshotType).IsRequired().HasMaxLength(50);
+            entity.Property(e => e.Notes).HasMaxLength(1000);
             entity.HasOne(e => e.User)
                 .WithMany()
                 .HasForeignKey(e => e.UserId)

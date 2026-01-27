@@ -112,6 +112,9 @@ export class StocksComponent {
       if (result && result.successCount > 0) {
         // Reload data after successful import
         this.snackBar.open('Import completed. Refresh the page to see imported data.', 'Close', { duration: 5000 });
+      }
+    });
+  }
 
   aiResearch(stock: Stock): void {
     this.dialog.open(AIResearchDialogComponent, {
